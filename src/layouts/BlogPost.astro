@@ -8,8 +8,22 @@ interface Props {
 }
 
 const { entry } = Astro.props;
-const { title, description, slug, lang, publishDate, sources, heroImage, canonicalUrl, faq } =
-  entry.data;
+const {
+  title,
+  description,
+  slug,
+  lang,
+  publishDate,
+  sources,
+  heroImage,
+  previewImage,
+  canonicalUrl,
+  faq,
+} = entry.data;
+// Posts with no dedicated OG raster (e.g. component-driven pages with no
+// single "hero photo") fall back to their on-page preview SVG rather than
+// the generic site logo.
+const ogImage = heroImage ?? previewImage;
 
 // Sibling translations of this same post share `slug` but differ in `lang`.
 const allPosts = await getCollection('blog');
@@ -30,7 +44,7 @@ const articleSchema = {
   datePublished: publishDate.toISOString(),
   inLanguage: lang,
   url: resolvedCanonical,
-  ...(heroImage ? { image: new URL(heroImage, Astro.site).toString() } : {}),
+  ...(ogImage ? { image: new URL(ogImage, Astro.site).toString() } : {}),
   publisher: {
     '@type': 'Organization',
     name: 'Abitamo',
@@ -59,7 +73,7 @@ const structuredData = faqSchema ? [articleSchema, faqSchema] : [articleSchema];
   title={`${title} | Abitamo`}
   description={description}
   canonicalUrl={resolvedCanonical}
-  ogImage={heroImage}
+  ogImage={ogImage}
   hreflangAlternates={hreflangAlternates}
   structuredData={structuredData}
 >

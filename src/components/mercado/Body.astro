@@ -1,0 +1,398 @@
+---
+import { copy, sourceCards, type Lang } from './copy';
+
+interface Props {
+  lang: Lang;
+  contactHref: string;
+}
+
+const { lang, contactHref } = Astro.props;
+const t = copy[lang];
+---
+<div class="mercado-root">
+  <!-- Hero -->
+  <section class="mercado-hero" aria-labelledby="mercado-hero-heading">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8 text-center">
+          <h1 id="mercado-hero-heading" class="mercado-hero__headline mb-4">{t.hero.headline}</h1>
+
+          <div class="mercado-hero__stat-row mb-3" aria-label="48% of landlords fear non-payment">
+            <span
+              class="mercado-hero__stat"
+              data-countup
+              data-target="48"
+              data-suffix="%"
+              data-load-animate="true"
+              aria-hidden="true"
+            >0%</span>
+            <p class="mercado-hero__hook mb-0">{t.hero.hookLabel}</p>
+          </div>
+
+          <p class="mercado-hero__scroll-cue mt-4 mb-0" aria-hidden="true">
+            {t.hero.scrollCue}
+            <span class="mercado-bounce ms-2">↓</span>
+          </p>
+
+          <p class="mercado-hero__updated">
+            <i class="bi bi-clock-history" aria-hidden="true"></i>
+            <time datetime="2026-03-31">{t.meta.updated}</time>
+            &nbsp;·&nbsp;
+            <span>{t.meta.sourcesBrief}</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pulse strip -->
+  <section class="section-warm-beige py-5" aria-label={t.meta.title}>
+    <div class="container">
+      <div class="row g-4 justify-content-center">
+        <div class="col-6 col-sm-4 col-md-auto text-center">
+          <div class="mercado-pulse-stat__value">
+            <span data-countup data-target="30.6" data-suffix="%" data-decimals="1" aria-label="30.6%">0%</span>
+          </div>
+          <div class="mercado-pulse-stat__label">{t.pulse.overburden.label}</div>
+          <div class="mercado-pulse-stat__source">{t.pulse.overburden.source}</div>
+        </div>
+        <div class="col-6 col-sm-4 col-md-auto text-center">
+          <div class="mercado-pulse-stat__value">
+            <span data-countup data-target="20.4" data-suffix="%" data-decimals="1" aria-label="20.4%">0%</span>
+          </div>
+          <div class="mercado-pulse-stat__label">{t.pulse.householdsRent.label}</div>
+          <div class="mercado-pulse-stat__source">{t.pulse.householdsRent.source}</div>
+        </div>
+        <div class="col-6 col-sm-4 col-md-auto text-center">
+          <div class="mercado-pulse-stat__value">
+            <span data-countup data-target="7.8" data-suffix=" yrs" data-decimals="1" aria-label="7.8 years">0 yrs</span>
+          </div>
+          <div class="mercado-pulse-stat__label">{t.pulse.priceIncome.label}</div>
+          <div class="mercado-pulse-stat__source">{t.pulse.priceIncome.source}</div>
+        </div>
+        <div class="col-6 col-sm-4 col-md-auto text-center">
+          <div class="mercado-pulse-stat__value">
+            <span data-countup data-target="1184" data-prefix="€" data-decimals="0" aria-label="€1,184 per month">€0</span><span class="mercado-pulse-stat__unit">/mo</span>
+          </div>
+          <div class="mercado-pulse-stat__label">{t.pulse.avgRentSpain.label}</div>
+          <div class="mercado-pulse-stat__source">{t.pulse.avgRentSpain.source}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Spain: overburden rings + pressure cards -->
+  <section class="py-5" style="background-color: var(--brand-bg-section);" aria-labelledby="mercado-spain-heading">
+    <div class="container">
+      <h2 id="mercado-spain-heading" class="fw-bold text-charcoal mb-5 text-center">{t.spain.heading}</h2>
+
+      <div class="mb-5">
+        <h3 class="fs-5 fw-semibold text-charcoal mb-4 text-center">{t.spain.overburdenHeading}</h3>
+        <div class="mercado-ring-wrapper mb-3">
+          <div class="text-center">
+            <div class="mercado-ring mx-auto mb-3" style="color: var(--brand-blue-sky);" data-ring data-target-fill="30.6%" aria-hidden="true"></div>
+            <div class="fw-bold fs-5" style="color: var(--brand-blue-sky);">30.6%</div>
+            <div class="fw-semibold text-charcoal">{t.spain.overburdenSpainLabel}</div>
+            <div class="text-muted small">CaixaBank Research · 2023</div>
+          </div>
+          <div class="text-center">
+            <div class="mercado-ring mx-auto mb-3" style="color: var(--brand-blue-400);" data-ring data-target-fill="20.3%" aria-hidden="true"></div>
+            <div class="fw-bold fs-5" style="color: var(--brand-blue-400);">20.3%</div>
+            <div class="fw-semibold text-charcoal">{t.spain.overburdenEuLabel}</div>
+            <div class="text-muted small">CaixaBank Research · 2023</div>
+          </div>
+        </div>
+        <p class="text-center text-muted fst-italic">{t.spain.overburdenContext}</p>
+      </div>
+
+      <div class="row g-4 justify-content-center">
+        {[
+          { ...t.spain.pressureCards.askingPrice, delay: 0 },
+          { ...t.spain.pressureCards.demand, delay: 100 },
+          { ...t.spain.pressureCards.supply, delay: 200 },
+        ].map((card) => (
+          <div class="col-12 col-md-4">
+            <div class="mercado-pressure-card mercado-fade" data-fadein style={`transition-delay: ${card.delay}ms;`}>
+              <div class="mercado-pressure-card__value">{card.value}</div>
+              <div class="fw-semibold text-charcoal mt-1">{card.label}</div>
+              <div class="text-muted small mt-1">{card.source}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Cities: price bars + trend cards -->
+  <section class="py-5" style="background-color: var(--brand-bg-section);" aria-labelledby="mercado-cities-heading">
+    <div class="container">
+      <h2 id="mercado-cities-heading" class="fw-bold text-charcoal mb-2 text-center">{t.cities.heading}</h2>
+      <p class="text-muted text-center mb-4">{t.cities.subheading}</p>
+
+      <div class="d-flex justify-content-center gap-4 mb-5 flex-wrap" aria-hidden="true">
+        <span class="d-flex align-items-center gap-2 small fw-semibold text-charcoal">
+          <span class="mercado-city-source-dot" style="background-color: var(--brand-blue-600);"></span>
+          {t.cities.legendIdealista}
+        </span>
+        <span class="d-flex align-items-center gap-2 small fw-semibold text-charcoal">
+          <span class="mercado-city-source-dot" style="background-color: var(--brand-blue-sky);"></span>
+          {t.cities.legendFotocasa}
+        </span>
+      </div>
+
+      <div class="col-12 col-md-9 mx-auto mb-2" aria-hidden="true">
+        {[
+          { label: t.cities.madridLabel, rows: [{ w: '95%', v: '€22.7/m²', c: '--brand-blue-600' }, { w: '89%', v: '€21.17/m²', c: '--brand-blue-sky' }] },
+          { label: t.cities.barcelonaLabel, rows: [{ w: '100%', v: '€23.8/m²', c: '--brand-blue-600' }, { w: '81%', v: '€19.38/m²', c: '--brand-blue-sky' }] },
+          { label: t.cities.balearesLabel, rows: [{ w: '78%', v: '€18.53/m²', c: '--brand-blue-sky' }] },
+          { label: t.cities.nationalLabel, rows: [{ w: '62%', v: '€14.7/m²', c: '--brand-blue-600' }, { w: '61%', v: '€14.46/m²', c: '--brand-blue-sky' }] },
+        ].map((city) => (
+          <div class="mb-4">
+            <div class="fw-semibold text-charcoal mb-2">{city.label}</div>
+            {city.rows.map((row) => (
+              <div class="d-flex align-items-center gap-3 mb-2">
+                <div class="flex-grow-1">
+                  <div class="mercado-bar-track">
+                    <div class="mercado-bar" data-bar data-target-width={row.w} style={`width: 0; background-color: var(${row.c});`}></div>
+                  </div>
+                </div>
+                <span class="fw-bold text-nowrap" style={`color: var(${row.c}); min-width: 6rem;`}>{row.v}</span>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      <p class="visually-hidden">{t.cities.accessibleSummary}</p>
+      <p class="text-muted small text-center fst-italic mt-3 mb-5">{t.cities.sourceNote}</p>
+
+      <h3 class="fs-5 fw-semibold text-charcoal mb-4 text-center">{t.cities.trends.heading}</h3>
+      <div class="row g-4 justify-content-center">
+        {[
+          { ...t.cities.trends.newContracts, delay: 0 },
+          { ...t.cities.trends.accumulation, delay: 100 },
+          { ...t.cities.trends.yield, delay: 200 },
+        ].map((card) => (
+          <div class="col-12 col-md-4">
+            <div class="mercado-trend-card mercado-fade" data-fadein style={`transition-delay: ${card.delay}ms;`}>
+              <div class="mercado-trend-card__value">{card.value}</div>
+              <div class="fw-semibold text-charcoal mt-1">{card.label}</div>
+              <div class="text-muted small mt-1">{card.source}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Youth affordability -->
+  <section class="mercado-youth" aria-labelledby="mercado-youth-heading">
+    <div class="container">
+      <div class="row align-items-center g-4 g-md-5">
+        <div class="col-12 col-md-5 text-center">
+          <div class="mercado-youth__stat" aria-label="92.3%">92.3%</div>
+          <p class="fs-5 mt-3 mb-1 text-white" style="opacity: 0.85;">{t.youth.statLabel}</p>
+          <p class="small mb-0 fst-italic text-white" style="opacity: 0.5;">{t.youth.statSource}</p>
+        </div>
+        <div class="col-12 col-md-7">
+          <h2 id="mercado-youth-heading" class="fw-bold text-white mb-2" style="font-size: clamp(1.25rem, 3vw, 1.75rem);">{t.youth.heading}</h2>
+          <p class="text-white mb-4" style="opacity: 0.75; font-size: 1.1rem;">{t.youth.framing}</p>
+          <div class="d-flex align-items-baseline gap-3 mb-4">
+            <div class="mercado-youth__emancip">{t.youth.emancipationStat}</div>
+            <div>
+              <div class="fw-semibold text-white" style="line-height: 1.3;">{t.youth.emancipationLabel}</div>
+              <div class="small text-white" style="opacity: 0.5;">{t.youth.emancipationSource}</div>
+            </div>
+          </div>
+          <p class="text-white small mb-0" style="opacity: 0.65; line-height: 1.6;">{t.youth.context}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Portugal -->
+  <section class="py-5 bg-white" aria-labelledby="mercado-portugal-heading">
+    <div class="container">
+      <div class="row align-items-center g-4 g-md-5">
+        <div class="col-12 col-md-6" aria-hidden="true">
+          <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-baseline mb-2 gap-2">
+              <span class="fw-semibold text-charcoal text-truncate">{t.portugal.lisbonLabel}</span>
+              <span class="fw-bold flex-shrink-0" style="color: var(--brand-blue-600);">€15.22/m²</span>
+            </div>
+            <div class="mercado-bar-track">
+              <div class="mercado-bar" data-bar data-target-width="100%" style="width: 0; background-color: var(--brand-blue-600);"></div>
+            </div>
+          </div>
+          <div class="mb-2">
+            <div class="d-flex justify-content-between align-items-baseline mb-2 gap-2">
+              <span class="fw-semibold text-charcoal text-truncate">{t.portugal.nationalLabel}</span>
+              <span class="fw-bold flex-shrink-0" style="color: var(--brand-blue-400);">€7.21/m²</span>
+            </div>
+            <div class="mercado-bar-track">
+              <div class="mercado-bar" data-bar data-target-width="47%" style="width: 0; background-color: var(--brand-blue-400);"></div>
+            </div>
+          </div>
+          <p class="text-muted small mt-3 mb-0">
+            <a href="https://www.ine.pt" target="_blank" rel="noopener noreferrer" aria-label="INE Portugal (opens in new tab)">{t.portugal.source} ↗</a>
+          </p>
+        </div>
+        <div class="col-12 col-md-6">
+          <h2 id="mercado-portugal-heading" class="fw-bold text-charcoal mb-3">{t.portugal.heading}</h2>
+          <p class="fs-5 text-charcoal mb-4">{t.portugal.framing}</p>
+          <ul class="list-unstyled mb-4">
+            <li class="mb-2">
+              <span class="fw-bold" style="color: var(--brand-blue-600);">€15.22/m²</span>
+              <span class="text-muted ms-1">— {t.portugal.lisbonLabel}</span>
+            </li>
+            <li>
+              <span class="fw-bold" style="color: var(--brand-blue-400);">€7.21/m²</span>
+              <span class="text-muted ms-1">— {t.portugal.nationalLabel}</span>
+            </li>
+          </ul>
+          <p class="text-muted small fst-italic">{t.portugal.dataNote}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Risk -->
+  <section class="mercado-risk" aria-labelledby="mercado-risk-heading">
+    <div class="container">
+      <div class="row align-items-center g-4 g-md-5">
+        <div class="col-12 col-md-5 text-center">
+          <div class="mercado-risk__stat" aria-label="48%">48%</div>
+          <p class="fs-5 mt-3 mb-1 text-white" style="opacity: 0.85;">{t.risk.statLabel}</p>
+          <p class="small mb-0 fst-italic" style="color: rgba(255,255,255,0.4);">{t.risk.source}</p>
+        </div>
+        <div class="col-12 col-md-7">
+          <h2 id="mercado-risk-heading" class="fw-bold text-white mb-4" style="font-size: clamp(1.25rem, 3vw, 1.75rem);">{t.risk.heading}</h2>
+          <ul class="list-unstyled mb-4">
+            {t.risk.points.map((point: string) => (
+              <li class="d-flex gap-3 mb-3">
+                <span class="flex-shrink-0 mt-1" style="color: var(--brand-blue-sky);" aria-hidden="true">●</span>
+                <span class="text-white" style="opacity: 0.85; line-height: 1.5;">{point}</span>
+              </li>
+            ))}
+          </ul>
+          <p class="text-white small mb-4" style="opacity: 0.6;">{t.risk.context}</p>
+          <a
+            href={contactHref}
+            class="btn btn-lg fw-semibold px-4"
+            style="background-color: var(--brand-blue-sky); color: #fff; border: none; border-radius: 8px;"
+          >{t.risk.cta}</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="py-5 bg-white" aria-labelledby="mercado-faq-heading">
+    <div class="container">
+      <div class="col-12 col-md-9 col-lg-7 mx-auto">
+        <h2 id="mercado-faq-heading" class="fw-bold text-charcoal mb-4 text-center">{t.faq.heading}</h2>
+        {t.faq.items.map((item: any) => (
+          <details class="mercado-faq-item">
+            <summary>{item.question}</summary>
+            <p class="mercado-faq-body">{item.answer}</p>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Sources -->
+  <section class="py-5" style="background-color: var(--brand-bg-primary);" aria-labelledby="mercado-sources-heading">
+    <div class="container">
+      <h2 id="mercado-sources-heading" class="fw-bold text-charcoal mb-2 text-center">{t.sources.heading}</h2>
+      <p class="text-muted text-center mb-5">{t.sources.subheading}</p>
+      <div class="row g-3">
+        {sourceCards.map((source) => (
+          <div class="col-12 col-md-6">
+            <div class="mercado-source-card h-100">
+              <div class="d-flex justify-content-between align-items-start mb-1">
+                <span class="fw-bold text-charcoal">{source.name}</span>
+                <span class={source.badge === 'auto' ? 'mercado-badge-auto' : 'mercado-badge-manual'}>
+                  {source.badge === 'auto' ? t.sources.automatedBadge : t.sources.manualBadge}
+                </span>
+              </div>
+              <div class="text-muted small">{source.desc}</div>
+              <div class="text-muted small">{source.date}</div>
+              <a href={source.url} target="_blank" rel="noopener noreferrer" class="small d-block mt-2" aria-label={`${source.name} (opens in new tab)`}>
+                {source.urlLabel} ↗
+              </a>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  // Ported from gestimo's mercado_controller.js. Fix vs. the original: when
+  // prefers-reduced-motion is set, the source controller returns before
+  // ever observing bar/ring/fade-in targets, leaving them stuck at their
+  // pre-animation state (zero width, zero fill, invisible) permanently --
+  // a real accessibility bug. Here, reduced motion jumps every element
+  // straight to its final state instead of skipping it.
+  const root = document.querySelector('.mercado-root');
+  if (root) {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function countup(el: HTMLElement) {
+      const target = parseFloat(el.dataset.target || '0');
+      const prefix = el.dataset.prefix || '';
+      const suffix = el.dataset.suffix || '';
+      const decimals = el.dataset.decimals ? parseInt(el.dataset.decimals) : 0;
+
+      if (prefersReducedMotion) {
+        el.textContent = prefix + target.toFixed(decimals) + suffix;
+        return;
+      }
+
+      const duration = 1200;
+      const start = performance.now();
+      function tick(now: number) {
+        const progress = Math.min((now - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - progress, 3);
+        el.textContent = prefix + (target * ease).toFixed(decimals) + suffix;
+        if (progress < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    const countupEls = root.querySelectorAll<HTMLElement>('[data-countup]');
+    countupEls.forEach((el) => {
+      if (el.dataset.loadAnimate === 'true') countup(el);
+    });
+
+    const barEls = root.querySelectorAll<HTMLElement>('[data-bar]');
+    const ringEls = root.querySelectorAll<HTMLElement>('[data-ring]');
+    const fadeEls = root.querySelectorAll<HTMLElement>('[data-fadein]');
+    const deferredCountupEls = Array.from(countupEls).filter((el) => el.dataset.loadAnimate !== 'true');
+
+    if (prefersReducedMotion) {
+      deferredCountupEls.forEach((el) => countup(el));
+      barEls.forEach((el) => { el.style.width = el.dataset.targetWidth || '0'; });
+      ringEls.forEach((el) => el.style.setProperty('--ring-fill', el.dataset.targetFill || '0%'));
+      fadeEls.forEach((el) => el.classList.add('mercado-visible'));
+    } else {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            const el = entry.target as HTMLElement;
+            observer.unobserve(el);
+            if (el.hasAttribute('data-countup')) countup(el);
+            if (el.hasAttribute('data-bar')) el.style.width = el.dataset.targetWidth || '0';
+            if (el.hasAttribute('data-ring')) el.style.setProperty('--ring-fill', el.dataset.targetFill || '0%');
+            if (el.hasAttribute('data-fadein')) el.classList.add('mercado-visible');
+          });
+        },
+        { threshold: 0.2 }
+      );
+      [...deferredCountupEls, ...barEls, ...ringEls, ...fadeEls].forEach((el) => observer.observe(el));
+    }
+  }
+</script>
