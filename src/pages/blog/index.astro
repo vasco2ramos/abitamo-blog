@@ -1,0 +1,52 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { postPath } from '../../lib/urls';
+
+const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+const posts = allPosts.sort(
+  (a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf()
+);
+
+const langLabel: Record<string, string> = { es: 'ES', pt: 'PT', en: 'EN' };
+---
+<BaseLayout
+  title="Blog | Abitamo"
+  description="Guías y datos sobre el mercado del alquiler en España y Portugal, y cómo Abitamo verifica inquilinos y propietarios."
+  canonicalUrl={new URL('/blog', Astro.site).toString()}
+>
+  <section class="py-5 section-light-blue">
+    <div class="container text-center">
+      <h1 class="display-6 fw-bold mb-2">Blog de Abitamo</h1>
+      <p class="text-muted">Mercado del alquiler, regulación y producto — con fuentes verificadas.</p>
+    </div>
+  </section>
+
+  <section class="py-5 bg-white">
+    <div class="container">
+      {posts.length === 0 ? (
+        <p class="text-muted text-center">Todavía no hay artículos publicados.</p>
+      ) : (
+        <div class="row g-4">
+          {posts.map((post) => (
+            <div class="col-12 col-md-6 col-lg-4">
+              <a
+                href={postPath(post.data.lang, post.data.slug)}
+                class="text-decoration-none text-reset"
+              >
+                <div class="card blog-card h-100 border-0 shadow-sm p-4">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="badge pillar-badge fw-semibold">{post.data.pillar}</span>
+                    <span class="badge bg-light text-muted">{langLabel[post.data.lang]}</span>
+                  </div>
+                  <h2 class="h5 fw-bold">{post.data.title}</h2>
+                  <p class="small text-muted mb-0">{post.data.description}</p>
+                </div>
+              </a>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </section>
+</BaseLayout>

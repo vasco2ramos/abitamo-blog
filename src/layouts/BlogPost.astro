@@ -1,0 +1,83 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import { getCollection, type CollectionEntry } from 'astro:content';
+import { postUrl } from '../lib/urls';
+
+interface Props {
+  entry: CollectionEntry<'blog'>;
+}
+
+const { entry } = Astro.props;
+const { title, description, slug, lang, publishDate, sources, heroImage, canonicalUrl, faq } =
+  entry.data;
+
+// Sibling translations of this same post share `slug` but differ in `lang`.
+const allPosts = await getCollection('blog');
+const siblings = allPosts.filter((p) => p.data.slug === slug);
+
+const hreflangAlternates = siblings.map((p) => ({
+  lang: p.data.lang,
+  href: postUrl(Astro.site, p.data.lang, p.data.slug),
+}));
+
+const resolvedCanonical = canonicalUrl ?? postUrl(Astro.site, lang, slug);
+
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: title,
+  description,
+  datePublished: publishDate.toISOString(),
+  inLanguage: lang,
+  url: resolvedCanonical,
+  ...(heroImage ? { image: new URL(heroImage, Astro.site).toString() } : {}),
+  publisher: {
+    '@type': 'Organization',
+    name: 'Abitamo',
+    url: 'https://abitamo.com',
+  },
+};
+
+const faqSchema = faq?.length
+  ? {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: faq.map((item) => ({
+        '@type': 'Question',
+        name: item.question,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: item.answer,
+        },
+      })),
+    }
+  : null;
+
+const structuredData = faqSchema ? [articleSchema, faqSchema] : [articleSchema];
+---
+<BaseLayout
+  title={`${title} | Abitamo`}
+  description={description}
+  canonicalUrl={resolvedCanonical}
+  ogImage={heroImage}
+  hreflangAlternates={hreflangAlternates}
+  structuredData={structuredData}
+>
+  <slot />
+  {sources?.length > 0 && (
+    <section class="py-4 bg-white border-top" aria-label="Fuentes">
+      <div class="container">
+        <h2 class="h6 text-muted text-uppercase mb-3">Fuentes</h2>
+        <ul class="small text-muted">
+          {sources.map((source) => (
+            <li>
+              <a href={source.url} target="_blank" rel="noopener noreferrer">
+                {source.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )}
+</BaseLayout>

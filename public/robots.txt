@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://abitamo.com/sitemap-index.xml

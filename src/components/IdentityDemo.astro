@@ -1,0 +1,125 @@
+---
+interface Props {
+  title: string;
+  subtitle: string;
+  toggleLabel: string;
+  tabMatch: string;
+  tabMismatch: string;
+  sampleDocumentLabel: string;
+  matchBadge: string;
+  mismatchBadge: string;
+  mismatchNote: string;
+}
+
+const {
+  title,
+  subtitle,
+  toggleLabel,
+  tabMatch,
+  tabMismatch,
+  sampleDocumentLabel,
+  matchBadge,
+  mismatchBadge,
+  mismatchNote,
+} = Astro.props;
+---
+<section class="py-5 bg-white" aria-label={title}>
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-8 text-center mb-4" data-aos="fade-up">
+        <h2 class="h3 fw-bold">{title}</h2>
+        <p class="text-muted">{subtitle}</p>
+      </div>
+    </div>
+
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-7">
+        <div class="position-relative identity-demo">
+          <div class="d-flex justify-content-center gap-2 mb-3" role="group" aria-label={toggleLabel}>
+            <button
+              type="button"
+              class="btn btn-outline-primary btn-sm identity-demo-tile active-identity-state"
+              data-state="match"
+              aria-pressed="true"
+            >
+              {tabMatch}
+            </button>
+            <button
+              type="button"
+              class="btn btn-outline-primary btn-sm identity-demo-tile"
+              data-state="mismatch"
+              aria-pressed="false"
+            >
+              {tabMismatch}
+            </button>
+          </div>
+
+          <div class="card border-0 rounded-4 shadow p-4" role="region" aria-live="polite" data-identity-panel>
+            <div class="small text-muted mb-2">{sampleDocumentLabel}</div>
+            <div class="fw-semibold mb-1">Nómina — Marzo 2026.pdf</div>
+            <div class="small text-success fw-semibold d-flex align-items-center gap-1">
+              <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+              <span>{matchBadge}</span>
+            </div>
+          </div>
+
+          <template data-identity-template="mismatch">
+            <div class="small text-muted mb-2">{sampleDocumentLabel}</div>
+            <div class="fw-semibold mb-1">Nómina — Marzo 2026.pdf</div>
+            <div class="small text-danger fw-semibold d-flex align-items-center gap-1 mb-2">
+              <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+              <span>{mismatchBadge}</span>
+            </div>
+            <div class="alert alert-danger py-2 mb-0 small">
+              <i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>
+              {mismatchNote}
+            </div>
+          </template>
+
+          <template data-identity-template="match">
+            <div class="small text-muted mb-2">{sampleDocumentLabel}</div>
+            <div class="fw-semibold mb-1">Nómina — Marzo 2026.pdf</div>
+            <div class="small text-success fw-semibold d-flex align-items-center gap-1">
+              <i class="bi bi-check-circle-fill" aria-hidden="true"></i>
+              <span>{matchBadge}</span>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll('.identity-demo').forEach((root) => {
+    const tiles = root.querySelectorAll<HTMLButtonElement>('.identity-demo-tile');
+    const panel = root.querySelector<HTMLElement>('[data-identity-panel]');
+    const templates = root.querySelectorAll<HTMLTemplateElement>('template[data-identity-template]');
+    const prefersMotion = () =>
+      window.matchMedia('(prefers-reduced-motion: no-preference)').matches;
+
+    tiles.forEach((tile) => {
+      tile.addEventListener('click', () => {
+        const state = tile.dataset.state;
+        const template = Array.from(templates).find(
+          (t) => t.dataset.identityTemplate === state
+        );
+        if (!template || !panel) return;
+
+        tiles.forEach((t) => {
+          const isActive = t === tile;
+          t.classList.toggle('active-identity-state', isActive);
+          t.setAttribute('aria-pressed', String(isActive));
+        });
+
+        panel.replaceChildren(template.content.cloneNode(true));
+
+        if (prefersMotion()) {
+          panel.classList.remove('identity-demo-fade');
+          void panel.offsetWidth;
+          panel.classList.add('identity-demo-fade');
+        }
+      });
+    });
+  });
+</script>

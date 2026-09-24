@@ -1,0 +1,216 @@
+---
+import IdentityDemo from '../IdentityDemo.astro';
+import { copy, type Lang } from './copy';
+
+interface Props {
+  lang: Lang;
+  contactHref: string;
+}
+
+const { lang, contactHref } = Astro.props;
+const t = copy[lang];
+---
+<section
+  class="hero-landlords-bg py-5"
+  aria-label={t.hero.title}
+  style={`background-image: linear-gradient(135deg, var(--brand-hero-overlay-from) 0%, var(--brand-hero-overlay-to) 100%), url(/blog/images/certificado-inquilino-hero.webp);`}
+>
+  <div class="container py-5">
+    <div class="row justify-content-center text-center text-white">
+      <div class="col-12 col-lg-8">
+        <span class="badge bg-white text-primary mb-3 px-3 py-2">
+          <i class="bi bi-cpu me-1" aria-hidden="true"></i>
+          {t.hero.badge}
+        </span>
+        <h1 class="display-5 fw-bold mb-3">{t.hero.title}</h1>
+        <p class="display-6 fs-4 mb-3">{t.hero.tagline}</p>
+        <p class="fs-5 mb-4">{t.hero.subtitle}</p>
+        <a class="btn btn-light btn-lg fw-semibold px-4 mb-4" href={contactHref}>
+          {t.hero.ctaPrimary}
+        </a>
+        <div class="d-flex flex-wrap justify-content-center gap-4 small">
+          <span><i class="bi bi-check2 me-1" aria-hidden="true"></i>{t.hero.trustChecks.aiAnalysis}</span>
+          <span><i class="bi bi-check2 me-1" aria-hidden="true"></i>{t.hero.trustChecks.identityCheck}</span>
+          <span><i class="bi bi-check2 me-1" aria-hidden="true"></i>{t.hero.trustChecks.minutes}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="py-5 section-warm-beige" aria-label={t.problem.title}>
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-12 col-lg-5 text-center">
+        <div class="text-uppercase small fw-semibold text-charcoal mb-2">{t.problem.label}</div>
+        <div class="text-accent-warm fw-bolder display-3" data-countup data-target={t.problem.stat} aria-hidden="true">0%</div>
+        <span class="visually-hidden">{t.problem.stat}</span>
+        <p class="fw-semibold mb-0">{t.problem.statLabel}</p>
+        <p class="small text-muted">{t.problem.statSource}</p>
+
+        <div class="mt-4">
+          <div class="text-brand-sky fw-bold fs-2" data-countup data-target={t.problem.supportingStat} aria-hidden="true">0</div>
+          <span class="visually-hidden">{t.problem.supportingStat}</span>
+          <p class="small fw-semibold mb-0">{t.problem.supportingStatLabel}</p>
+          <p class="small text-muted">{t.problem.supportingStatSource}</p>
+        </div>
+      </div>
+      <div class="col-12 col-lg-7">
+        <h2 class="h3 fw-bold text-charcoal mb-3">{t.problem.title}</h2>
+        <p class="text-charcoal">{t.problem.body}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="py-5 section-light-blue" aria-label={t.howItWorks.title}>
+  <div class="container">
+    <div class="row justify-content-center text-center mb-5">
+      <div class="col-12 col-lg-8">
+        <div class="text-uppercase small fw-semibold text-primary mb-2">{t.howItWorks.label}</div>
+        <h2 class="h3 fw-bold">{t.howItWorks.title}</h2>
+        <p class="text-muted">{t.howItWorks.subtitle}</p>
+      </div>
+    </div>
+    <div class="row g-4">
+      {t.howItWorks.steps.map((step: any, i: number) => (
+        <div class="col-12 col-md-4">
+          <div class="card h-100 border-0 shadow-sm p-4 text-center">
+            <div class="step-badge mx-auto mb-3">{i + 1}</div>
+            <i class={`bi ${step.icon} fs-2 text-primary mb-3`} aria-hidden="true"></i>
+            <h3 class="h5 fw-semibold">{step.title}</h3>
+            <p class="small text-muted mb-0">{step.description}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<IdentityDemo
+  title={t.identityDemo.title}
+  subtitle={t.identityDemo.subtitle}
+  toggleLabel={t.identityDemo.toggleLabel}
+  tabMatch={t.identityDemo.tabMatch}
+  tabMismatch={t.identityDemo.tabMismatch}
+  sampleDocumentLabel={t.identityDemo.sampleDocumentLabel}
+  matchBadge={t.identityDemo.matchBadge}
+  mismatchBadge={t.identityDemo.mismatchBadge}
+  mismatchNote={t.identityDemo.mismatchNote}
+/>
+
+<section class="py-5 bg-white" aria-label={t.whyAgents.title}>
+  <div class="container">
+    <div class="row justify-content-center text-center mb-5">
+      <div class="col-12 col-lg-8">
+        <div class="text-uppercase small fw-semibold text-primary mb-2">{t.whyAgents.label}</div>
+        <h2 class="h3 fw-bold">{t.whyAgents.title}</h2>
+        <p class="text-muted">{t.whyAgents.subtitle}</p>
+      </div>
+    </div>
+    <div class="row g-4">
+      {t.whyAgents.items.map((item: any) => (
+        <div class="col-12 col-md-4">
+          <div class="card h-100 border-0 shadow-sm p-4 text-center">
+            <i class={`bi ${item.icon} fs-2 text-primary mb-3`} aria-hidden="true"></i>
+            <h3 class="h5 fw-semibold">{item.title}</h3>
+            <p class="small text-muted mb-0">{item.description}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<section class="py-5 section-warm-beige" aria-label={t.faq.title}>
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-12 col-lg-8">
+        <div class="text-center mb-4">
+          <div class="text-uppercase small fw-semibold text-charcoal mb-2">{t.faq.label}</div>
+          <h2 class="h3 fw-bold text-charcoal">{t.faq.title}</h2>
+        </div>
+        <div class="accordion" id="certInquilinoFaq">
+          {t.faq.items.map((item: any, i: number) => (
+            <div class="accordion-item">
+              <h3 class="accordion-header" id={`faq-heading-${i}`}>
+                <button
+                  class={`accordion-button ${i === 0 ? '' : 'collapsed'}`}
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target={`#faq-collapse-${i}`}
+                  aria-expanded={i === 0 ? 'true' : 'false'}
+                  aria-controls={`faq-collapse-${i}`}
+                >
+                  {item.question}
+                </button>
+              </h3>
+              <div
+                id={`faq-collapse-${i}`}
+                class={`accordion-collapse collapse ${i === 0 ? 'show' : ''}`}
+                aria-labelledby={`faq-heading-${i}`}
+                data-bs-parent="#certInquilinoFaq"
+              >
+                <div class="accordion-body text-muted">{item.answer}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="py-5 section-cta-gradient text-white" aria-label={t.cta.title}>
+  <div class="container text-center">
+    <h2 class="h3 fw-bold mb-3">{t.cta.title}</h2>
+    <p class="fs-5 mb-4">{t.cta.description}</p>
+    <a class="btn btn-light btn-lg fw-semibold px-4 mb-4" href={contactHref}>{t.cta.primaryButton}</a>
+    <div class="d-flex flex-wrap justify-content-center gap-4 small">
+      <span><i class="bi bi-check2 me-1" aria-hidden="true"></i>{t.cta.benefits.aiAnalysis}</span>
+      <span><i class="bi bi-check2 me-1" aria-hidden="true"></i>{t.cta.benefits.free}</span>
+      <span><i class="bi bi-check2 me-1" aria-hidden="true"></i>{t.cta.benefits.fast}</span>
+    </div>
+  </div>
+</section>
+
+<script>
+  function countup(el: HTMLElement) {
+    const targetRaw = el.dataset.target || '0';
+    const suffix = targetRaw.replace(/[0-9.,]/g, '');
+    const target = parseFloat(targetRaw.replace(',', '.'));
+    const prefersMotion = window.matchMedia('(prefers-reduced-motion: no-preference)').matches;
+    const isDecimal = targetRaw.includes(',') || targetRaw.includes('.');
+
+    if (!prefersMotion) {
+      el.textContent = targetRaw;
+      return;
+    }
+
+    const duration = 1200;
+    const start = performance.now();
+
+    function frame(now: number) {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const value = target * eased;
+      el.textContent = isDecimal ? value.toFixed(1).replace('.', ',') + suffix : Math.round(value) + suffix;
+      if (progress < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  const countupEls = document.querySelectorAll<HTMLElement>('[data-countup]');
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          countup(entry.target as HTMLElement);
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.4 }
+  );
+  countupEls.forEach((el) => observer.observe(el));
+</script>

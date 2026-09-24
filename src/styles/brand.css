@@ -1,0 +1,118 @@
+/* Ported from gestimo's app/assets/stylesheets/brand.css (single source of
+   truth over there) plus the handful of section/utility classes this blog
+   actually uses, ported from application.css. Do not introduce a hex value
+   here that isn't already used on the main site. */
+:root {
+  --brand-blue-500: #3b82f6;
+  --brand-blue-600: #2563eb;
+  --brand-blue-700: #1d4ed8;
+  --brand-blue-sky: #0ea5e9;
+  --brand-blue-subtle: #dbeafe;
+
+  --brand-success: #10b981;
+
+  --accent-warm: #E07A5F;
+  --accent-warm-light: #FDF1ED;
+
+  --color-accent-goldenrod: #F2CC8F;
+
+  --color-background-soft-beige: #EEF2FF;
+  --color-text-charcoal-brown: #3D405B;
+
+  --brand-navy-dark: #1e3c72;
+  --brand-navy-mid: #2a5298;
+
+  --brand-hero-overlay-from: rgba(30, 60, 114, 0.80);
+  --brand-hero-overlay-to: rgba(42, 82, 152, 0.70);
+
+  --brand-bg-primary: #f1f9fe;
+  --brand-bg-section: #f8fbff;
+
+  --brand-slate-500: #64748b;
+  --brand-slate-700: #334155;
+}
+
+body {
+  font-family: 'Questrial', sans-serif;
+  overflow-x: hidden;
+  color: var(--brand-slate-700);
+}
+
+.text-accent-warm { color: var(--accent-warm); }
+.bg-accent-warm-light { background-color: var(--accent-warm-light); }
+.text-brand-sky { color: var(--brand-blue-sky); }
+
+.hero-landlords-bg {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.section-light-blue {
+  background: linear-gradient(180deg, var(--brand-bg-section) 0%, #f0f7ff 100%);
+}
+
+.section-cta-gradient {
+  background: linear-gradient(135deg, var(--brand-blue-500) 0%, var(--brand-blue-700) 100%);
+}
+
+.section-warm-beige {
+  background-color: var(--color-background-soft-beige);
+}
+
+.text-charcoal {
+  color: var(--color-text-charcoal-brown);
+}
+
+.footer-gradient {
+  background: linear-gradient(135deg, var(--brand-navy-dark) 0%, var(--brand-navy-mid) 100%);
+}
+
+.text-white-75 {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* Step-number badges (how-it-works cards) */
+.step-badge {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  background: var(--color-accent-goldenrod);
+  color: #5a4a1f;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Identity-demo fade transition, ported from utilities.css'
+   certificate-guide-panel-fade keyframe */
+@keyframes identity-demo-fade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.identity-demo-fade {
+  animation: identity-demo-fade 0.25s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .identity-demo-fade { animation: none; }
+}
+
+.identity-demo-tile.active-identity-state {
+  background-color: var(--brand-blue-500);
+  color: #fff;
+}
+
+/* Blog listing cards */
+.blog-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.blog-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.75rem 1.5rem rgba(30, 60, 114, 0.12);
+}
+
+.pillar-badge {
+  background-color: var(--brand-blue-subtle);
+  color: var(--brand-blue-600);
+}
