@@ -1,7 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import { postPath } from '../../lib/urls';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { postPath } from '../lib/urls';
 
 const allPosts = await getCollection('blog', ({ data }) => !data.draft);
 
@@ -33,7 +33,7 @@ const articles = Array.from(groups.values())
 <BaseLayout
   title="Blog | Abitamo"
   description="Guías y datos sobre el mercado del alquiler en España y Portugal, y cómo Abitamo verifica inquilinos y propietarios."
-  canonicalUrl={new URL('/blog', Astro.site).toString()}
+  canonicalUrl={new URL('/', Astro.site).toString()}
 >
   <section class="py-5 section-light-blue">
     <div class="container text-center">

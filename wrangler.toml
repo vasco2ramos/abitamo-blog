@@ -1,17 +1,26 @@
 name = "abitamo-blog"
 compatibility_date = "2026-09-01"
 
-# Cloudflare's Git-connected Pages build runs `npx wrangler deploy` as its
-# deploy step (the unified Workers/Pages CLI), which needs an [assets]
-# block -- the old `pages_build_output_dir` key alone isn't enough and
-# makes that command fail with "Missing entry-point ... or to assets
-# directory" since there's no Worker script here, only static output.
+# blog.abitamo.com is a Cloudflare-managed zone (domain transferred off
+# one.com 2026-09-24). custom_domain = true has wrangler provision the DNS
+# + attach it to this Worker directly on deploy -- no separate dashboard
+# step, no edge-routing Worker needed. Must come before [assets] below --
+# TOML attaches trailing key=value lines to the last [table] header, so
+# this would silently nest under [assets] otherwise.
+routes = [
+  { pattern = "blog.abitamo.com", custom_domain = true }
+]
+
+# Cloudflare's Git-connected build runs `npx wrangler deploy` as its deploy
+# step (the unified Workers/Pages CLI), which needs an [assets] block --
+# the old `pages_build_output_dir` key alone isn't enough and makes that
+# command fail with "Missing entry-point ... or to assets directory" since
+# there's no Worker script here, only static output.
 [assets]
 directory = "./dist"
 # Astro is configured with trailingSlash: 'never', so canonical/hreflang
 # URLs (and every internal link) have no trailing slash. The default
 # "auto-trailing-slash" handling 307-redirects those to a trailing-slash
-# URL before serving 200, which fights the declared canonical once this
-# sits behind abitamo.com/blog/*. "drop-trailing-slash" serves the
-# extensionless URL directly instead.
+# URL before serving 200, which fights the declared canonical. This makes
+# the extensionless URL serve 200 directly instead.
 html_handling = "drop-trailing-slash"

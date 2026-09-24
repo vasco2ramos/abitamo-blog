@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://abitamo.com/sitemap-index.xml
+Sitemap: https://blog.abitamo.com/sitemap-index.xml
