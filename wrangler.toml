@@ -1,3 +1,10 @@
 name = "abitamo-blog"
 compatibility_date = "2026-09-01"
-pages_build_output_dir = "dist"
+
+# Cloudflare's Git-connected Pages build runs `npx wrangler deploy` as its
+# deploy step (the unified Workers/Pages CLI), which needs an [assets]
+# block -- the old `pages_build_output_dir` key alone isn't enough and
+# makes that command fail with "Missing entry-point ... or to assets
+# directory" since there's no Worker script here, only static output.
+[assets]
+directory = "./dist"
