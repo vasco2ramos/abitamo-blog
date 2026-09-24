@@ -8,3 +8,10 @@ compatibility_date = "2026-09-01"
 # directory" since there's no Worker script here, only static output.
 [assets]
 directory = "./dist"
+# Astro is configured with trailingSlash: 'never', so canonical/hreflang
+# URLs (and every internal link) have no trailing slash. The default
+# "auto-trailing-slash" handling 307-redirects those to a trailing-slash
+# URL before serving 200, which fights the declared canonical once this
+# sits behind abitamo.com/blog/*. "drop-trailing-slash" serves the
+# extensionless URL directly instead.
+html_handling = "drop-trailing-slash"
