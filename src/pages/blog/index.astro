@@ -4,11 +4,31 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { postPath } from '../../lib/urls';
 
 const allPosts = await getCollection('blog', ({ data }) => !data.draft);
-const posts = allPosts.sort(
-  (a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf()
-);
 
+// Group translations of the same article (same `slug`) into one card.
+// `es` is the primary market/company voice, so it's what the card shows
+// by default when available; the other languages become small pills.
+const langPriority = ['es', 'pt', 'en'];
 const langLabel: Record<string, string> = { es: 'ES', pt: 'PT', en: 'EN' };
+
+const groups = new Map<string, typeof allPosts>();
+for (const post of allPosts) {
+  const key = post.data.slug;
+  if (!groups.has(key)) groups.set(key, []);
+  groups.get(key)!.push(post);
+}
+
+const articles = Array.from(groups.values())
+  .map((variants) => {
+    const primary =
+      langPriority.map((l) => variants.find((v) => v.data.lang === l)).find(Boolean) ??
+      variants[0];
+    const translations = langPriority
+      .map((l) => variants.find((v) => v.data.lang === l))
+      .filter((v): v is (typeof variants)[number] => Boolean(v));
+    return { primary, translations };
+  })
+  .sort((a, b) => b.primary.data.publishDate.valueOf() - a.primary.data.publishDate.valueOf());
 ---
 <BaseLayout
   title="Blog | Abitamo"
@@ -24,25 +44,40 @@ const langLabel: Record<string, string> = { es: 'ES', pt: 'PT', en: 'EN' };
 
   <section class="py-5 bg-white">
     <div class="container">
-      {posts.length === 0 ? (
+      {articles.length === 0 ? (
         <p class="text-muted text-center">Todavía no hay artículos publicados.</p>
       ) : (
         <div class="row g-4">
-          {posts.map((post) => (
+          {articles.map(({ primary, translations }) => (
             <div class="col-12 col-md-6 col-lg-4">
-              <a
-                href={postPath(post.data.lang, post.data.slug)}
-                class="text-decoration-none text-reset"
-              >
-                <div class="card blog-card h-100 border-0 shadow-sm p-4">
-                  <div class="d-flex justify-content-between align-items-start mb-2">
-                    <span class="badge pillar-badge fw-semibold">{post.data.pillar}</span>
-                    <span class="badge bg-light text-muted">{langLabel[post.data.lang]}</span>
-                  </div>
-                  <h2 class="h5 fw-bold">{post.data.title}</h2>
-                  <p class="small text-muted mb-0">{post.data.description}</p>
+              <div class="card blog-card h-100 border-0 shadow-sm p-4">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <span class="badge pillar-badge fw-semibold">{primary.data.pillar}</span>
+                  {translations.length > 1 && (
+                    <div class="d-flex gap-1" aria-label="Idiomas disponibles">
+                      {translations.map((t) => (
+                        <a
+                          href={postPath(t.data.lang, t.data.slug)}
+                          class={`badge text-decoration-none position-relative z-2 ${
+                            t.data.lang === primary.data.lang
+                              ? 'bg-primary text-white'
+                              : 'bg-light text-muted'
+                          }`}
+                        >
+                          {langLabel[t.data.lang]}
+                        </a>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </a>
+                <a
+                  href={postPath(primary.data.lang, primary.data.slug)}
+                  class="text-decoration-none text-reset stretched-link"
+                >
+                  <h2 class="h5 fw-bold">{primary.data.title}</h2>
+                </a>
+                <p class="small text-muted mb-0">{primary.data.description}</p>
+              </div>
             </div>
           ))}
         </div>
