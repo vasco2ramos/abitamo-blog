@@ -35,10 +35,14 @@ const articles = Array.from(groups.values())
   description="Guías y datos sobre el mercado del alquiler en España y Portugal, y cómo Abitamo verifica inquilinos y propietarios."
   canonicalUrl={new URL('/', Astro.site).toString()}
 >
-  <section class="py-5 section-light-blue">
-    <div class="container text-center">
-      <h1 class="display-6 fw-bold mb-2">Blog de Abitamo</h1>
-      <p class="text-muted">Mercado del alquiler, regulación y producto — con fuentes verificadas.</p>
+  <section
+    class="hero-landlords-bg py-5"
+    aria-label="Blog de Abitamo"
+    style="background-image: linear-gradient(135deg, var(--brand-hero-overlay-from) 0%, var(--brand-hero-overlay-to) 100%), url(/images/blog-hero.svg);"
+  >
+    <div class="container py-5 text-white text-center">
+      <h1 class="display-5 fw-bold mb-2">Blog de Abitamo</h1>
+      <p class="fs-5 mb-0">Mercado del alquiler, regulación y producto — con fuentes verificadas.</p>
     </div>
   </section>
 
@@ -50,33 +54,43 @@ const articles = Array.from(groups.values())
         <div class="row g-4">
           {articles.map(({ primary, translations }) => (
             <div class="col-12 col-md-6 col-lg-4">
-              <div class="card blog-card h-100 border-0 shadow-sm p-4">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                  <span class="badge pillar-badge fw-semibold">{primary.data.pillar}</span>
-                  {translations.length > 1 && (
-                    <div class="d-flex gap-1" aria-label="Idiomas disponibles">
-                      {translations.map((t) => (
-                        <a
-                          href={postPath(t.data.lang, t.data.slug)}
-                          class={`badge text-decoration-none position-relative z-2 ${
-                            t.data.lang === primary.data.lang
-                              ? 'bg-primary text-white'
-                              : 'bg-light text-muted'
-                          }`}
-                        >
-                          {langLabel[t.data.lang]}
-                        </a>
-                      ))}
-                    </div>
-                  )}
+              <div class="card blog-card h-100 border-0 shadow-sm overflow-hidden">
+                {primary.data.previewImage && (
+                  <div
+                    class="blog-card-thumb"
+                    style={`background-image: linear-gradient(135deg, var(--brand-hero-overlay-from) 0%, var(--brand-hero-overlay-to) 100%), url(${primary.data.previewImage});`}
+                    role="img"
+                    aria-label={primary.data.previewImageAlt ?? ''}
+                  />
+                )}
+                <div class="p-4">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="badge pillar-badge fw-semibold">{primary.data.pillar}</span>
+                    {translations.length > 1 && (
+                      <div class="d-flex gap-1" aria-label="Idiomas disponibles">
+                        {translations.map((t) => (
+                          <a
+                            href={postPath(t.data.lang, t.data.slug)}
+                            class={`badge text-decoration-none position-relative z-2 ${
+                              t.data.lang === primary.data.lang
+                                ? 'bg-primary text-white'
+                                : 'bg-light text-muted'
+                            }`}
+                          >
+                            {langLabel[t.data.lang]}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <a
+                    href={postPath(primary.data.lang, primary.data.slug)}
+                    class="text-decoration-none text-reset stretched-link"
+                  >
+                    <h2 class="h5 fw-bold">{primary.data.title}</h2>
+                  </a>
+                  <p class="small text-muted mb-0">{primary.data.description}</p>
                 </div>
-                <a
-                  href={postPath(primary.data.lang, primary.data.slug)}
-                  class="text-decoration-none text-reset stretched-link"
-                >
-                  <h2 class="h5 fw-bold">{primary.data.title}</h2>
-                </a>
-                <p class="small text-muted mb-0">{primary.data.description}</p>
               </div>
             </div>
           ))}

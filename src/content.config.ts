@@ -43,8 +43,15 @@ const blog = defineCollection({
       )
       .default([]),
     canonicalUrl: z.string().url().optional(),
+    // Raster, used for OG/Twitter/JSON-LD social previews (SVG isn't
+    // reliably rendered by social crawlers).
     heroImage: z.string().optional(),
     heroImageAlt: z.string().optional(),
+    // On-page visual, used for the post's own hero AND its card thumbnail
+    // on the blog index -- typically an SVG, can be higher-fidelity/lighter
+    // than heroImage since it only ever renders in a real browser.
+    previewImage: z.string().optional(),
+    previewImageAlt: z.string().optional(),
     // When present, BlogPost.astro emits a FAQPage JSON-LD block alongside
     // the Article schema.
     faq: z
