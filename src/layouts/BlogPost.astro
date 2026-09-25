@@ -34,6 +34,16 @@ const hreflangAlternates = siblings.map((p) => ({
   href: postUrl(Astro.site, p.data.lang, p.data.slug),
 }));
 
+const defaultSibling = ['es', 'pt', 'en']
+  .map((l) => siblings.find((p) => p.data.lang === l))
+  .find(Boolean);
+if (defaultSibling) {
+  hreflangAlternates.push({
+    lang: 'x-default',
+    href: postUrl(Astro.site, defaultSibling.data.lang, defaultSibling.data.slug),
+  });
+}
+
 const resolvedCanonical = canonicalUrl ?? postUrl(Astro.site, lang, slug);
 
 const articleSchema = {
