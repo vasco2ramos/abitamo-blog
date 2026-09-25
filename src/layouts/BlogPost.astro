@@ -13,13 +13,40 @@ const {
   description,
   slug,
   lang,
+  pillar,
   publishDate,
   sources,
   heroImage,
+  heroImageAlt,
   previewImage,
+  previewImageAlt,
   canonicalUrl,
   faq,
+  hasCustomHero,
+  heroTheme,
 } = entry.data;
+
+// Side-by-side hero (title/date on one side, the illustration on the
+// other) rather than text overlaid on the image as a background -- a long
+// title wrapping to 2-3 lines would otherwise collide with the artwork's
+// own detail. The section's own background is a flat color/gradient
+// (never the post image), keyed off heroTheme:
+//   'dark'  -- navy gradient + white text (original site convention)
+//   'light' -- soft neutral beige + charcoal text (for a light-background
+//              previewImage, e.g. the warm goldenrod family)
+const heroSectionBg =
+  heroTheme === 'light'
+    ? 'var(--color-background-soft-beige)'
+    : 'linear-gradient(135deg, var(--brand-navy-dark) 0%, var(--brand-navy-mid) 100%)';
+const heroTextClass = heroTheme === 'light' ? 'text-charcoal' : 'text-white';
+const heroSubTextClass = heroTheme === 'light' ? 'text-charcoal-75' : 'text-white-75';
+
+const dateLocale = { es: 'es-ES', pt: 'pt-PT', en: 'en-GB' }[lang] ?? 'es-ES';
+const formattedDate = publishDate.toLocaleDateString(dateLocale, {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
 // Posts with no dedicated OG raster (e.g. component-driven pages with no
 // single "hero photo") fall back to their on-page preview SVG rather than
 // the generic site logo.
@@ -87,7 +114,57 @@ const structuredData = faqSchema ? [articleSchema, faqSchema] : [articleSchema];
   hreflangAlternates={hreflangAlternates}
   structuredData={structuredData}
 >
-  <slot />
+  {!hasCustomHero && (
+    <section class="py-5" aria-label={title} style={`background: ${heroSectionBg};`}>
+      <div class="container py-4">
+        <div class="row align-items-center g-4 g-lg-5">
+          <div class={`col-lg-7 ${heroTextClass}`}>
+            <span class="badge pillar-badge fw-semibold mb-3 d-inline-block">{pillar}</span>
+            <h1 class="display-6 fw-bold mb-3">{title}</h1>
+            <p class={`${heroSubTextClass} mb-0`}>
+              <time datetime={publishDate.toISOString()}>{formattedDate}</time>
+            </p>
+          </div>
+          {previewImage && (
+            <div class="col-lg-5">
+              <img
+                src={previewImage}
+                alt={previewImageAlt ?? ''}
+                class="img-fluid rounded-4 shadow-lg w-100"
+                loading="eager"
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  )}
+  <article class={hasCustomHero ? '' : 'py-5 bg-white'}>
+    <div class={hasCustomHero ? '' : 'container'}>
+      <div class={hasCustomHero ? '' : 'row justify-content-center'}>
+        <div class={hasCustomHero ? '' : 'col-lg-8 blog-post-body'}>
+          <slot />
+        </div>
+      </div>
+    </div>
+  </article>
+  {!hasCustomHero && faq?.length > 0 && (
+    <section class="py-4 bg-white border-top" aria-label="Preguntas frecuentes">
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-lg-8">
+            <h2 class="h5 fw-bold mb-3">Preguntas frecuentes</h2>
+            {faq.map((item) => (
+              <details class="mercado-faq-item">
+                <summary>{item.question}</summary>
+                <div class="mercado-faq-body">{item.answer}</div>
+              </details>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  )}
   {sources?.length > 0 && (
     <section class="py-4 bg-white border-top" aria-label="Fuentes">
       <div class="container">

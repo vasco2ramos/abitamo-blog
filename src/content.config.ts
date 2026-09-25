@@ -62,6 +62,20 @@ const blog = defineCollection({
         })
       )
       .optional(),
+    // true for posts that import their own bespoke Body component
+    // (certificado-inquilino, mercado) and render their own hero/title
+    // inside it. Plain-prose posts leave this false (the default) and get
+    // BlogPost.astro's generic hero banner (previewImage background, title,
+    // publish date, pillar badge) plus a styled prose container -- without
+    // this flag, a bespoke post would get that generic header rendered
+    // ABOVE its own custom one, duplicating it.
+    hasCustomHero: z.boolean().default(false),
+    // Controls the generic hero banner's contrast treatment (see
+    // BlogPost.astro). 'dark' (default) keeps the original navy-tint
+    // overlay + white text, right for a dark/navy previewImage. 'light' is
+    // for a light-background previewImage (e.g. the warm goldenrod family)
+    // -- no navy overlay, charcoal-brown text instead of white.
+    heroTheme: z.enum(['dark', 'light']).default('dark'),
   }),
 });
 

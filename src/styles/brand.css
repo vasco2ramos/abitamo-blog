@@ -68,6 +68,10 @@ body {
   color: var(--color-text-charcoal-brown);
 }
 
+.text-charcoal-75 {
+  color: rgba(61, 64, 91, 0.75);
+}
+
 .footer-gradient {
   background: linear-gradient(135deg, var(--brand-navy-dark) 0%, var(--brand-navy-mid) 100%);
 }
@@ -105,6 +109,20 @@ body {
 .identity-demo-tile.active-identity-state {
   background-color: var(--brand-blue-500);
   color: #fff;
+}
+
+/* Individual post body: plain-prose posts (no hasCustomHero) get this
+   generic typography via BlogPost.astro's .blog-post-body wrapper. */
+.blog-post-body {
+  color: var(--brand-slate-700);
+  line-height: 1.8;
+  font-size: 1.08rem;
+}
+.blog-post-body p {
+  margin-bottom: 1.4rem;
+}
+.blog-post-body p:last-child {
+  margin-bottom: 0;
 }
 
 /* Blog listing cards */
