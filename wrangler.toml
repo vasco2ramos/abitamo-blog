@@ -40,3 +40,8 @@ run_worker_first = true
 # URL before serving 200, which fights the declared canonical. This makes
 # the extensionless URL serve 200 directly instead.
 html_handling = "drop-trailing-slash"
+
+# Branch builds run `npx wrangler preview`, which refuses to run without a
+# `previews` block. Empty is enough: assets and compatibility settings stay
+# at the top level.
+[previews]
