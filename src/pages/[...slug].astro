@@ -1,11 +1,12 @@
 ---
 import { getCollection, render } from 'astro:content';
 import BlogPost from '../layouts/BlogPost.astro';
+import { postPath } from '../lib/urls';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog');
   return posts.map((post) => {
-    const routeSlug = post.data.lang === 'es' ? post.data.slug : `${post.data.lang}/${post.data.slug}`;
+    const routeSlug = postPath(post.data).slice(1);
     return {
       params: { slug: routeSlug },
       props: { post },

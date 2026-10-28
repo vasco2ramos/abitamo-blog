@@ -33,6 +33,7 @@ export const copy: Record<Lang, any> = {
       label: 'Cómo funciona',
       title: 'Verificación en 3 pasos',
       subtitle: 'El inquilino sube su documentación. Abitamo la analiza con IA. Se genera el certificado.',
+      simulatorLink: 'Prueba el simulador gratuito',
       steps: [
         {
           icon: 'bi-file-earmark-arrow-up',
@@ -123,6 +124,7 @@ export const copy: Record<Lang, any> = {
       label: 'Como funciona',
       title: 'Verificação em 3 passos',
       subtitle: 'O inquilino envia a sua documentação. A Abitamo analisa-a com IA. O certificado é gerado.',
+      simulatorLink: 'Experimente o simulador gratuito',
       steps: [
         {
           icon: 'bi-file-earmark-arrow-up',
@@ -213,6 +215,7 @@ export const copy: Record<Lang, any> = {
       label: 'How it works',
       title: 'Verification in 3 steps',
       subtitle: 'The tenant uploads their documentation. Abitamo analyzes it with AI. The certificate is generated.',
+      simulatorLink: 'Try the free simulator',
       steps: [
         {
           icon: 'bi-file-earmark-arrow-up',

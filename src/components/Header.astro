@@ -1,4 +1,11 @@
 ---
+import { appUrl } from '../lib/urls';
+import { t } from '../lib/i18n';
+
+interface Props {
+  lang?: string;
+}
+const { lang = 'es' } = Astro.props;
 ---
 <header>
   <nav class="navbar navbar-light bg-white border-bottom-0 py-3">
@@ -6,8 +13,8 @@
       <a class="navbar-brand fw-bold d-flex align-items-center mb-0" href="/">
         <img src="/images/logo.png" alt="Abitamo" class="me-2" height="28" />
       </a>
-      <a class="btn btn-cta-pop text-white fw-semibold border-0 d-flex align-items-center" href="https://abitamo.com">
-        Ir a Abitamo
+      <a class="btn btn-cta-pop text-white fw-semibold border-0 d-flex align-items-center" href={appUrl(lang)}>
+        {t(lang).goToApp}
         <i class="bi bi-arrow-right ms-2" aria-hidden="true"></i>
       </a>
     </div>

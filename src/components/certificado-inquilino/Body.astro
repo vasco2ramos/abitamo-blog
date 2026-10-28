@@ -1,6 +1,7 @@
 ---
 import IdentityDemo from '../IdentityDemo.astro';
 import { copy, type Lang } from './copy';
+import { appUrl } from '../../lib/urls';
 
 interface Props {
   lang: Lang;
@@ -84,6 +85,9 @@ const t = copy[lang];
         </div>
       ))}
     </div>
+    <p class="text-center mt-4 mb-0">
+      <a class="fw-semibold" href={appUrl(lang, '/simulator')}>{t.howItWorks.simulatorLink} →</a>
+    </p>
   </div>
 </section>
 

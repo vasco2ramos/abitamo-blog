@@ -2,6 +2,7 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { postPath } from '../lib/urls';
+import { formatDate } from '../lib/i18n';
 
 const allPosts = await getCollection('blog', ({ data }) => !data.draft);
 
@@ -70,7 +71,7 @@ const articles = Array.from(groups.values())
                       <div class="d-flex gap-1" aria-label="Idiomas disponibles">
                         {translations.map((t) => (
                           <a
-                            href={postPath(t.data.lang, t.data.slug)}
+                            href={postPath(t.data)}
                             class={`badge text-decoration-none position-relative z-2 ${
                               t.data.lang === primary.data.lang
                                 ? 'bg-primary text-white'
@@ -84,11 +85,16 @@ const articles = Array.from(groups.values())
                     )}
                   </div>
                   <a
-                    href={postPath(primary.data.lang, primary.data.slug)}
+                    href={postPath(primary.data)}
                     class="text-decoration-none text-reset stretched-link"
                   >
                     <h2 class="h5 fw-bold">{primary.data.title}</h2>
                   </a>
+                  <p class="small text-muted mb-2">
+                    <time datetime={primary.data.publishDate.toISOString().slice(0, 10)}>
+                      {formatDate(primary.data.publishDate, primary.data.lang)}
+                    </time>
+                  </p>
                   <p class="small text-muted mb-0">{primary.data.description}</p>
                 </div>
               </div>

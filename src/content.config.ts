@@ -18,8 +18,15 @@ const blog = defineCollection({
     // hreflang alternates. Defaults to the post's own slug for posts with
     // no translations.
     slug: z.string(),
+    // Language-specific URL segment. Defaults to `slug`, which is right for
+    // the Spanish originals; pt/en set a translated one.
+    urlSlug: z.string().optional(),
     description: z.string(),
     publishDate: z.coerce.date(),
+    // Set when the post is materially revised; drives "Actualizado el",
+    // JSON-LD dateModified and the sitemap <lastmod>. Falls back to
+    // publishDate when absent.
+    updatedDate: z.coerce.date().optional(),
     lang: z.enum(['es', 'pt', 'en']),
     pillar: z.enum([
       'trust-gap',
