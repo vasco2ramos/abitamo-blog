@@ -6,8 +6,10 @@ const LEGACY_HOST = 'blog.abitamo.com';
 // This Worker is not reachable on abitamo.com itself: the apex is proxied to
 // Render, which sits behind its own Cloudflare network, and zone Workers do
 // not run there. Instead the Rails app proxies the blog paths to this Worker
-// on a dedicated hostname (blog-origin.abitamo.com), and visitors only ever
-// see abitamo.com/{es,pt,en}/blog. See docs/rails-blog-proxy.diff.
+// and visitors only ever see abitamo.com/{es,pt,en}/blog. The proxy should
+// call the workers.dev URL: blog-origin.abitamo.com sits in the abitamo.com
+// zone, whose bot protection challenges requests coming from Render.
+// See docs/rails-blog-proxy.diff.
 //
 // Paths that belong to the blog; anything else is a 404 here.
 const BLOG_PATH = /^\/(es|pt|en)\/blog(\/|$)/;
@@ -51,13 +53,10 @@ export default {
 
     const response = await env.ASSETS.fetch(request);
 
-    // Hitting the origin hostname directly (not through the Rails proxy)
-    // must not get this duplicate content indexed.
-    if (url.hostname === 'blog-origin.abitamo.com') {
-      const headers = new Headers(response.headers);
-      headers.set('x-robots-tag', 'noindex');
-      return new Response(response.body, { status: response.status, headers });
-    }
-    return response;
+    // Only the Rails proxy should reach this Worker for real traffic. Anyone
+    // hitting it directly must not get duplicate content indexed.
+    const headers = new Headers(response.headers);
+    headers.set('x-robots-tag', 'noindex');
+    return new Response(response.body, { status: response.status, headers });
   },
 };

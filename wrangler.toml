@@ -3,9 +3,14 @@ main = "worker/index.js"
 compatibility_date = "2026-09-01"
 
 # The blog is served at abitamo.com/{es,pt,en}/blog by the Rails app, which
-# proxies those paths to this Worker on blog-origin.abitamo.com. (Zone routes
-# on abitamo.com do not work: the apex is proxied to Render, which sits
-# behind its own Cloudflare network, so zone Workers never run there.)
+# proxies those paths to this Worker. (Zone routes on abitamo.com do not
+# work: the apex is proxied to Render, which sits behind its own Cloudflare
+# network, so zone Workers never run there.)
+#
+# The proxy calls the workers.dev URL, not blog-origin.abitamo.com: that
+# hostname is in the abitamo.com zone, whose bot protection returns a
+# "Just a moment..." challenge to requests coming from Render's IPs.
+# blog-origin.abitamo.com stays attached as a fallback.
 #
 # blog.abitamo.com stays attached only to 301 old URLs to their new address
 # (see worker/index.js and worker/legacy-redirects.json).
@@ -13,6 +18,7 @@ compatibility_date = "2026-09-01"
 # Must come before [assets] below -- TOML attaches trailing key=value lines
 # to the last [table] header, so this would silently nest under [assets]
 # otherwise.
+workers_dev = true
 routes = [
   { pattern = "blog.abitamo.com", custom_domain = true },
   { pattern = "blog-origin.abitamo.com", custom_domain = true },
