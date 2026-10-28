@@ -16,3 +16,6 @@ npm-debug.log*
 
 # editor
 .DS_Store
+
+# wrangler local state
+.wrangler/
