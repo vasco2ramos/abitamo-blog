@@ -1,4 +1,4 @@
-export const SITE = 'https://blog.abitamo.com';
+export const SITE = 'https://abitamo.com';
 
 export const AUTHOR = {
   '@type': 'Person',
@@ -14,6 +14,6 @@ export const PUBLISHER = {
   url: 'https://abitamo.com',
   logo: {
     '@type': 'ImageObject',
-    url: `${SITE}/images/logo.png`,
+    url: `${SITE}/blog-assets/images/logo.png`,
   },
 } as const;
