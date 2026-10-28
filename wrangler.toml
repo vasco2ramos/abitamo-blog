@@ -1,39 +1,23 @@
 name = "abitamo-blog"
-main = "worker/index.js"
 compatibility_date = "2026-09-01"
 
-# The blog is served from abitamo.com/{es,pt,en}/blog. abitamo.com is a
-# Cloudflare zone proxying the Rails app, so these route patterns carve the
-# blog's paths out of it and send only those to this Worker; every other
-# request on abitamo.com never touches it. Anything that does match a route
-# but isn't ours (e.g. /es/blogger) is passed to the origin by the Worker.
-#
-# blog.abitamo.com stays attached to this Worker only to 301 old URLs to
-# their new address (see worker/index.js and worker/legacy-redirects.json).
-#
-# Must come before [assets] below -- TOML attaches trailing key=value lines
-# to the last [table] header, so this would silently nest under [assets]
-# otherwise.
+# blog.abitamo.com is a Cloudflare-managed zone (domain transferred off
+# one.com 2026-09-24). custom_domain = true has wrangler provision the DNS
+# + attach it to this Worker directly on deploy -- no separate dashboard
+# step, no edge-routing Worker needed. Must come before [assets] below --
+# TOML attaches trailing key=value lines to the last [table] header, so
+# this would silently nest under [assets] otherwise.
 routes = [
-  { pattern = "abitamo.com/es/blog*", zone_name = "abitamo.com" },
-  { pattern = "abitamo.com/pt/blog*", zone_name = "abitamo.com" },
-  { pattern = "abitamo.com/en/blog*", zone_name = "abitamo.com" },
-  { pattern = "abitamo.com/blog-assets/*", zone_name = "abitamo.com" },
-  { pattern = "abitamo.com/blog-sitemap*", zone_name = "abitamo.com" },
-  { pattern = "blog.abitamo.com", custom_domain = true },
+  { pattern = "blog.abitamo.com", custom_domain = true }
 ]
 
-# Cloudflare's Git-connected build runs `npx wrangler deploy`. The static
-# output is served by the Worker itself through the ASSETS binding rather
-# than proxied to a second origin, so there is one deploy and no hostname
-# for the blog to depend on.
+# Cloudflare's Git-connected build runs `npx wrangler deploy` as its deploy
+# step (the unified Workers/Pages CLI), which needs an [assets] block --
+# the old `pages_build_output_dir` key alone isn't enough and makes that
+# command fail with "Missing entry-point ... or to assets directory" since
+# there's no Worker script here, only static output.
 [assets]
 directory = "./dist"
-binding = "ASSETS"
-# The Worker must see every request first: blog.abitamo.com needs to 301
-# even paths that exist as files, and abitamo.com requests are filtered in
-# code. Without this, a matching static file is served and the script skipped.
-run_worker_first = true
 # Astro is configured with trailingSlash: 'never', so canonical/hreflang
 # URLs (and every internal link) have no trailing slash. The default
 # "auto-trailing-slash" handling 307-redirects those to a trailing-slash

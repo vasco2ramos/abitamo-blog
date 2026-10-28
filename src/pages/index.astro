@@ -1,0 +1,107 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { postPath } from '../lib/urls';
+import { formatDate } from '../lib/i18n';
+
+const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+
+// Group translations of the same article (same `slug`) into one card.
+// `es` is the primary market/company voice, so it's what the card shows
+// by default when available; the other languages become small pills.
+const langPriority = ['es', 'pt', 'en'];
+const langLabel: Record<string, string> = { es: 'ES', pt: 'PT', en: 'EN' };
+
+const groups = new Map<string, typeof allPosts>();
+for (const post of allPosts) {
+  const key = post.data.slug;
+  if (!groups.has(key)) groups.set(key, []);
+  groups.get(key)!.push(post);
+}
+
+const articles = Array.from(groups.values())
+  .map((variants) => {
+    const primary =
+      langPriority.map((l) => variants.find((v) => v.data.lang === l)).find(Boolean) ??
+      variants[0];
+    const translations = langPriority
+      .map((l) => variants.find((v) => v.data.lang === l))
+      .filter((v): v is (typeof variants)[number] => Boolean(v));
+    return { primary, translations };
+  })
+  .sort((a, b) => b.primary.data.publishDate.valueOf() - a.primary.data.publishDate.valueOf());
+---
+<BaseLayout
+  title="Blog | Abitamo"
+  description="Guías y datos sobre el mercado del alquiler en España y Portugal, y cómo Abitamo verifica inquilinos y propietarios."
+  canonicalUrl={new URL('/', Astro.site).toString()}
+>
+  <section
+    class="hero-landlords-bg py-5"
+    aria-label="Blog de Abitamo"
+    style="background-image: linear-gradient(135deg, var(--brand-hero-overlay-from) 0%, var(--brand-hero-overlay-to) 100%), url(/images/blog-hero.svg);"
+  >
+    <div class="container py-5 text-white text-center">
+      <h1 class="display-5 fw-bold mb-2">Blog de Abitamo</h1>
+      <p class="fs-5 mb-0">Mercado del alquiler, regulación y producto — con fuentes verificadas.</p>
+    </div>
+  </section>
+
+  <section class="py-5 bg-white">
+    <div class="container">
+      {articles.length === 0 ? (
+        <p class="text-muted text-center">Todavía no hay artículos publicados.</p>
+      ) : (
+        <div class="row g-4">
+          {articles.map(({ primary, translations }) => (
+            <div class="col-12 col-md-6 col-lg-4">
+              <div class="card blog-card h-100 border-0 shadow-sm overflow-hidden">
+                {primary.data.previewImage && (
+                  <div
+                    class="blog-card-thumb"
+                    style={`background-image: linear-gradient(135deg, var(--brand-hero-overlay-from) 0%, var(--brand-hero-overlay-to) 100%), url(${primary.data.previewImage});`}
+                    role="img"
+                    aria-label={primary.data.previewImageAlt ?? ''}
+                  />
+                )}
+                <div class="p-4">
+                  <div class="d-flex justify-content-between align-items-start mb-2">
+                    <span class="badge pillar-badge fw-semibold">{primary.data.pillar}</span>
+                    {translations.length > 1 && (
+                      <div class="d-flex gap-1" aria-label="Idiomas disponibles">
+                        {translations.map((t) => (
+                          <a
+                            href={postPath(t.data)}
+                            class={`badge text-decoration-none position-relative z-2 ${
+                              t.data.lang === primary.data.lang
+                                ? 'bg-primary text-white'
+                                : 'bg-light text-muted'
+                            }`}
+                          >
+                            {langLabel[t.data.lang]}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <a
+                    href={postPath(primary.data)}
+                    class="text-decoration-none text-reset stretched-link"
+                  >
+                    <h2 class="h5 fw-bold">{primary.data.title}</h2>
+                  </a>
+                  <p class="small text-muted mb-2">
+                    <time datetime={primary.data.publishDate.toISOString().slice(0, 10)}>
+                      {formatDate(primary.data.publishDate, primary.data.lang)}
+                    </time>
+                  </p>
+                  <p class="small text-muted mb-0">{primary.data.description}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </section>
+</BaseLayout>
