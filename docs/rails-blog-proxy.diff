@@ -1,0 +1,222 @@
+diff -ruN a/app/controllers/blog_proxy_controller.rb b/app/controllers/blog_proxy_controller.rb
+--- a/app/controllers/blog_proxy_controller.rb	1970-01-01 01:00:00
++++ b/app/controllers/blog_proxy_controller.rb	2026-10-28 14:59:26
+@@ -0,0 +1,84 @@
++# frozen_string_literal: true
++
++# Serves the blog under this host (abitamo.com/{es,pt,en}/blog). The blog is a static site on
++# a Cloudflare Worker, reachable at BLOG_ORIGIN. A Cloudflare Worker route on abitamo.com
++# cannot do this job: the apex is proxied to Render, which sits behind its own Cloudflare
++# network, so zone Workers never run for it. Rails relays the request instead.
++#
++# Inherits from ActionController::Base on purpose: no locale handling, auth or flash, and no
++# session cookie, so the responses stay cacheable.
++class BlogProxyController < ActionController::Base # rubocop:disable Rails/ApplicationController
++  ORIGIN = ENV.fetch('BLOG_ORIGIN_URL', 'https://blog-origin.abitamo.com').chomp('/')
++  OPEN_TIMEOUT = 2
++  READ_TIMEOUT = 8
++
++  PAGE_CACHE = 'public, max-age=300'
++  ASSET_CACHE = 'public, max-age=86400'
++  HASHED_ASSET_CACHE = 'public, max-age=31536000, immutable'
++  ERROR_CACHE = 'no-store'
++
++  UPSTREAM_ERRORS = [
++    HTTParty::Error, Net::OpenTimeout, Net::ReadTimeout, SocketError, SystemCallError, OpenSSL::SSL::SSLError
++  ].freeze
++
++  before_action { request.session_options[:skip] = true }
++
++  def show
++    upstream = fetch_upstream
++    status = upstream.code.to_i
++
++    if (300..399).cover?(status) && upstream.headers['location'].present?
++      relay_redirect(upstream, status)
++    else
++      relay_body(upstream, status)
++    end
++  rescue *UPSTREAM_ERRORS => e
++    Rails.logger.error("[blog_proxy] #{request.fullpath}: #{e.class}: #{e.message}")
++    upstream_failed
++  end
++
++  private
++
++  # Upstream redirects (e.g. trailing slash) carry the origin hostname; keep visitors on this host.
++  def relay_redirect(upstream, status)
++    target = URI.parse(upstream.headers['location'])
++    path = target.path.presence || '/'
++    path = "#{path}?#{target.query}" if target.query
++    response.headers['Cache-Control'] = PAGE_CACHE
++    redirect_to path, status: status
++  end
++
++  def fetch_upstream
++    HTTParty.get("#{ORIGIN}#{request.fullpath}", format: :plain, follow_redirects: false,
++                                                 open_timeout: OPEN_TIMEOUT, read_timeout: READ_TIMEOUT)
++  end
++
++  def relay_body(upstream, status)
++    return upstream_failed if status >= 500
++
++    response.headers['Cache-Control'] = cache_control_for(status)
++    copy_validators(upstream)
++    render body: upstream.body, status: status,
++           content_type: upstream.headers['content-type'].presence || 'application/octet-stream'
++  end
++
++  def copy_validators(upstream)
++    { 'etag' => 'ETag', 'last-modified' => 'Last-Modified' }.each do |from, to|
++      value = upstream.headers[from]
++      response.headers[to] = value if value.present?
++    end
++  end
++
++  def upstream_failed
++    response.headers['Cache-Control'] = ERROR_CACHE
++    head :bad_gateway
++  end
++
++  def cache_control_for(status)
++    return ERROR_CACHE unless status == 200
++    return HASHED_ASSET_CACHE if request.path.start_with?('/blog-assets/_astro/')
++    return ASSET_CACHE if request.path.start_with?('/blog-assets/')
++
++    PAGE_CACHE
++  end
++end
+diff -ruN a/config/routes.rb b/config/routes.rb
+--- a/config/routes.rb	2026-10-28 14:58:32
++++ b/config/routes.rb	2026-10-28 14:58:32
+@@ -19,6 +19,14 @@
+   # Generated from config/public_pages.yml
+   get 'sitemap.xml', to: 'sitemaps#show', defaults: { format: 'xml' }, as: :sitemap
+ 
++  # Blog: a static site on Cloudflare, relayed by BlogProxyController. Declared before the
++  # locale scope so `/es/blog` is not treated as an app page. `format: false` keeps file
++  # extensions (.xml, .png, .css) inside the path.
++  get ':locale/blog(/*blog_path)', to: 'blog_proxy#show', locale: /es|pt|en/, format: false
++  get 'blog-assets/*blog_path', to: 'blog_proxy#show', format: false
++  get 'blog-sitemap-index.xml', to: 'blog_proxy#show', format: false
++  get 'blog-sitemap-:number.xml', to: 'blog_proxy#show', number: /\d+/, format: false
++
+   # Catch invalid paths before locale scope
+   get '*invalid', to: 'errors#not_found', constraints: lambda { |req|
+     req.path.start_with?('/.')
+diff -ruN a/test/controllers/blog_proxy_controller_test.rb b/test/controllers/blog_proxy_controller_test.rb
+--- a/test/controllers/blog_proxy_controller_test.rb	1970-01-01 01:00:00
++++ b/test/controllers/blog_proxy_controller_test.rb	2026-10-28 14:59:10
+@@ -0,0 +1,112 @@
++# frozen_string_literal: true
++
++require 'test_helper'
++
++class BlogProxyControllerTest < ActionDispatch::IntegrationTest
++  ORIGIN = 'https://blog-origin.abitamo.com'
++
++  def upstream(code: 200, body: '<html>post</html>', headers: { 'content-type' => 'text/html; charset=utf-8' })
++    stub(code: code, body: body, headers: headers)
++  end
++
++  # Rails reorders Cache-Control directives, so compare them as a set.
++  def cache_directives
++    response.headers['Cache-Control'].split(',').map(&:strip).sort
++  end
++
++  test 'relays a blog page from the origin, keeping the path and query' do
++    HTTParty.expects(:get).with("#{ORIGIN}/pt/blog/mercado-arrendamento-2026?utm_source=x",
++                                has_entries(follow_redirects: false, format: :plain)).returns(upstream)
++
++    get '/pt/blog/mercado-arrendamento-2026?utm_source=x'
++
++    assert_response :success
++    assert_equal '<html>post</html>', response.body
++    assert_match %r{text/html}, response.content_type
++    assert_equal %w[max-age=300 public], cache_directives
++  end
++
++  test 'serves the listing for every blog locale' do
++    %w[es pt en].each do |locale|
++      HTTParty.expects(:get).with("#{ORIGIN}/#{locale}/blog", anything).returns(upstream)
++      get "/#{locale}/blog"
++      assert_response :success
++    end
++  end
++
++  test 'does not set a session cookie, so responses stay cacheable' do
++    HTTParty.stubs(:get).returns(upstream)
++
++    get '/es/blog'
++
++    assert_nil response.headers['Set-Cookie']
++  end
++
++  test 'hashed build assets are cached for a year, other assets for a day' do
++    HTTParty.expects(:get).with("#{ORIGIN}/blog-assets/_astro/Base.abc123.css", anything)
++            .returns(upstream(headers: { 'content-type' => 'text/css' }))
++    HTTParty.expects(:get).with("#{ORIGIN}/blog-assets/images/logo.png", anything)
++            .returns(upstream(headers: { 'content-type' => 'image/png' }))
++
++    get '/blog-assets/_astro/Base.abc123.css'
++    assert_equal %w[immutable max-age=31536000 public], cache_directives
++
++    get '/blog-assets/images/logo.png'
++    assert_equal %w[max-age=86400 public], cache_directives
++  end
++
++  test 'relays the blog sitemap files with their extension intact' do
++    HTTParty.expects(:get).with("#{ORIGIN}/blog-sitemap-index.xml", anything)
++            .returns(upstream(headers: { 'content-type' => 'application/xml' }))
++    HTTParty.expects(:get).with("#{ORIGIN}/blog-sitemap-0.xml", anything)
++            .returns(upstream(headers: { 'content-type' => 'application/xml' }))
++
++    get '/blog-sitemap-index.xml'
++    assert_response :success
++    get '/blog-sitemap-0.xml'
++    assert_response :success
++  end
++
++  test 'passes upstream 404s through without long caching' do
++    HTTParty.expects(:get).returns(upstream(code: 404, body: 'Not found', headers: { 'content-type' => 'text/plain' }))
++
++    get '/en/blog/nope'
++
++    assert_response :not_found
++    assert_equal 'no-store', response.headers['Cache-Control']
++  end
++
++  test 'rewrites upstream redirects to this host' do
++    HTTParty.expects(:get).returns(upstream(code: 307, body: '', headers: { 'location' => "#{ORIGIN}/es/blog" }))
++
++    get '/es/blog/'
++
++    assert_response :temporary_redirect
++    assert_redirected_to '/es/blog'
++  end
++
++  test 'answers 502 when the origin is unreachable' do
++    HTTParty.expects(:get).raises(Net::OpenTimeout)
++
++    get '/es/blog'
++
++    assert_response :bad_gateway
++    assert_equal 'no-store', response.headers['Cache-Control']
++  end
++
++  test 'answers 502 when the origin itself fails' do
++    HTTParty.expects(:get).returns(upstream(code: 503, body: 'down', headers: {}))
++
++    get '/es/blog'
++
++    assert_response :bad_gateway
++  end
++
++  test 'does not proxy locales the app does not have' do
++    HTTParty.expects(:get).never
++
++    get '/fr/blog'
++
++    assert_response :not_found
++  end
++end
