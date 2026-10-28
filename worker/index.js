@@ -3,10 +3,13 @@ import legacyRedirects from './legacy-redirects.json' with { type: 'json' };
 const APP_ORIGIN = 'https://abitamo.com';
 const LEGACY_HOST = 'blog.abitamo.com';
 
-// Paths on abitamo.com that belong to the blog; everything else is the
-// Rails app's. wrangler.toml's `routes` already narrow what reaches this
-// Worker, so this is the second line of defence (e.g. `/es/blogger` matches
-// the `/es/blog*` route but is not ours).
+// This Worker is not reachable on abitamo.com itself: the apex is proxied to
+// Render, which sits behind its own Cloudflare network, and zone Workers do
+// not run there. Instead the Rails app proxies the blog paths to this Worker
+// on a dedicated hostname (blog-origin.abitamo.com), and visitors only ever
+// see abitamo.com/{es,pt,en}/blog. See docs/rails-blog-proxy.diff.
+//
+// Paths that belong to the blog; anything else is a 404 here.
 const BLOG_PATH = /^\/(es|pt|en)\/blog(\/|$)/;
 const BLOG_ASSETS = /^\/blog-assets\//;
 const BLOG_SITEMAP = /^\/blog-sitemap(-index|-\d+)?\.xml$/;
@@ -44,9 +47,17 @@ export default {
 
     if (url.hostname === LEGACY_HOST) return handleLegacyHost(request);
 
-    if (isBlogPath(url.pathname)) return env.ASSETS.fetch(request);
+    if (!isBlogPath(url.pathname)) return new Response('Not found', { status: 404 });
 
-    // Not ours: hand the request to the origin (the Rails app).
-    return fetch(request);
+    const response = await env.ASSETS.fetch(request);
+
+    // Hitting the origin hostname directly (not through the Rails proxy)
+    // must not get this duplicate content indexed.
+    if (url.hostname === 'blog-origin.abitamo.com') {
+      const headers = new Headers(response.headers);
+      headers.set('x-robots-tag', 'noindex');
+      return new Response(response.body, { status: response.status, headers });
+    }
+    return response;
   },
 };

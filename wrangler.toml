@@ -2,31 +2,24 @@ name = "abitamo-blog"
 main = "worker/index.js"
 compatibility_date = "2026-09-01"
 
-# The blog is served from abitamo.com/{es,pt,en}/blog. abitamo.com is a
-# Cloudflare zone proxying the Rails app, so these route patterns carve the
-# blog's paths out of it and send only those to this Worker; every other
-# request on abitamo.com never touches it. Anything that does match a route
-# but isn't ours (e.g. /es/blogger) is passed to the origin by the Worker.
+# The blog is served at abitamo.com/{es,pt,en}/blog by the Rails app, which
+# proxies those paths to this Worker on blog-origin.abitamo.com. (Zone routes
+# on abitamo.com do not work: the apex is proxied to Render, which sits
+# behind its own Cloudflare network, so zone Workers never run there.)
 #
-# blog.abitamo.com stays attached to this Worker only to 301 old URLs to
-# their new address (see worker/index.js and worker/legacy-redirects.json).
+# blog.abitamo.com stays attached only to 301 old URLs to their new address
+# (see worker/index.js and worker/legacy-redirects.json).
 #
 # Must come before [assets] below -- TOML attaches trailing key=value lines
 # to the last [table] header, so this would silently nest under [assets]
 # otherwise.
 routes = [
-  { pattern = "abitamo.com/es/blog*", zone_name = "abitamo.com" },
-  { pattern = "abitamo.com/pt/blog*", zone_name = "abitamo.com" },
-  { pattern = "abitamo.com/en/blog*", zone_name = "abitamo.com" },
-  { pattern = "abitamo.com/blog-assets/*", zone_name = "abitamo.com" },
-  { pattern = "abitamo.com/blog-sitemap*", zone_name = "abitamo.com" },
   { pattern = "blog.abitamo.com", custom_domain = true },
+  { pattern = "blog-origin.abitamo.com", custom_domain = true },
 ]
 
 # Cloudflare's Git-connected build runs `npx wrangler deploy`. The static
-# output is served by the Worker itself through the ASSETS binding rather
-# than proxied to a second origin, so there is one deploy and no hostname
-# for the blog to depend on.
+# output is served by the Worker itself through the ASSETS binding.
 [assets]
 directory = "./dist"
 binding = "ASSETS"
