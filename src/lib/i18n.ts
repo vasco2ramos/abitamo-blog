@@ -1,4 +1,4 @@
-import type { Lang } from './urls.js';
+import type { Lang } from './urls';
 
 export const ui = {
   es: {
@@ -17,10 +17,6 @@ export const ui = {
     footerCountries: 'España y Portugal',
     footerRights: 'Todos los derechos reservados.',
     dateLocale: 'es-ES',
-    blogTitle: 'Blog de Abitamo',
-    blogTagline: 'Mercado del alquiler, regulación y producto — con fuentes verificadas.',
-    blogDescription: 'Guías y datos sobre el mercado del alquiler en España y Portugal, y cómo Abitamo verifica inquilinos y propietarios.',
-    noPosts: 'Todavía no hay artículos publicados.',
   },
   pt: {
     goToApp: 'Ir para a Abitamo',
@@ -38,10 +34,6 @@ export const ui = {
     footerCountries: 'Espanha e Portugal',
     footerRights: 'Todos os direitos reservados.',
     dateLocale: 'pt-PT',
-    blogTitle: 'Blog da Abitamo',
-    blogTagline: 'Mercado de arrendamento, regulação e produto — com fontes verificadas.',
-    blogDescription: 'Guias e dados sobre o mercado de arrendamento em Espanha e Portugal, e como a Abitamo verifica inquilinos e proprietários.',
-    noPosts: 'Ainda não há artigos publicados.',
   },
   en: {
     goToApp: 'Go to Abitamo',
@@ -59,10 +51,6 @@ export const ui = {
     footerCountries: 'Spain and Portugal',
     footerRights: 'All rights reserved.',
     dateLocale: 'en-GB',
-    blogTitle: 'Abitamo Blog',
-    blogTagline: 'Rental market, regulation and product — with verified sources.',
-    blogDescription: 'Guides and data on the rental market in Spain and Portugal, and how Abitamo verifies tenants and landlords.',
-    noPosts: 'No articles published yet.',
   },
 } satisfies Record<Lang, Record<string, string>>;
 

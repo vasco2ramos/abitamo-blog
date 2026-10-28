@@ -4,7 +4,7 @@ import sitemap from '@astrojs/sitemap';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, extname } from 'node:path';
 import matter from 'gray-matter';
-import { postUrl, blogIndexPath, hreflangCode, LANGS } from './src/lib/urls.js';
+import { postUrl, hreflangCode } from './src/lib/urls.ts';
 
 // `draft: true` posts must still build and be reachable by direct URL (for
 // preview), just excluded from the sitemap, hreflang and the listing page.
@@ -17,7 +17,7 @@ import { postUrl, blogIndexPath, hreflangCode, LANGS } from './src/lib/urls.js';
 // alternates: it groups translations by identical path after stripping the
 // locale prefix, and PT/EN posts now have translated slugs.
 const CONTENT_DIR = new URL('./src/content/blog', import.meta.url).pathname;
-const SITE = 'https://abitamo.com';
+const SITE = 'https://blog.abitamo.com';
 
 function scanPosts() {
   const posts = [];
@@ -52,33 +52,20 @@ for (const post of published) {
     links: siblings.length > 1 ? links : undefined,
   });
 }
+const homeLastmod = [...pageMeta.values()].map((m) => m.lastmod).sort().at(-1);
 
-// Per-language listing pages: lastmod is the newest post in that language,
-// alternates are the other languages' listings.
-const indexLinks = [
-  ...LANGS.map((l) => ({ url: `${SITE}${blogIndexPath(l)}`, lang: hreflangCode(l) })),
-  { url: `${SITE}${blogIndexPath('es')}`, lang: 'x-default' },
-];
-for (const lang of LANGS) {
-  const lastmods = published.filter((p) => p.lang === lang).map((p) => toDay(p.updatedDate ?? p.publishDate));
-  pageMeta.set(`${SITE}${blogIndexPath(lang)}`, { lastmod: lastmods.sort().at(-1), links: indexLinks });
-}
-
-// The blog is served from abitamo.com/{es,pt,en}/blog by the Worker in
-// worker/index.js (config in wrangler.toml). Routes live at the dist root
-// (dist/es/blog/...), and every asset sits under /blog-assets/ so the
-// Worker's routes can claim a narrow set of paths and leave the Rails app's
-// own /assets, /images etc. alone.
+// Site is blog.abitamo.com (subdomain, not abitamo.com/blog/*) -- every
+// route lives at src/pages/ root and the Worker is attached to that
+// hostname via wrangler.toml's `routes` (custom_domain = true).
 export default defineConfig({
-  site: SITE,
+  site: 'https://blog.abitamo.com',
   trailingSlash: 'never',
-  build: { assets: 'blog-assets/_astro' },
   integrations: [
     mdx(),
     sitemap({
-      filenameBase: 'blog-sitemap',
       filter: (page) => !excludedFromSitemap.has(page),
       serialize(item) {
+        if (item.url === `${SITE}/`) return { ...item, lastmod: homeLastmod };
         const meta = pageMeta.get(item.url);
         return meta ? { ...item, lastmod: meta.lastmod, links: meta.links } : item;
       },
