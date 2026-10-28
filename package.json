@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "astro dev",
     "check-sources": "node scripts/check-sources.mjs",
-    "prebuild": "npm run check-sources",
+    "gen-redirects": "node scripts/gen-legacy-redirects.mjs",
+    "prebuild": "npm run check-sources && npm run gen-redirects",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro"
