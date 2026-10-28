@@ -9,6 +9,8 @@ interface HreflangAlt {
 }
 
 interface Props {
+  lang?: string;
+  ogType?: 'website' | 'article';
   title: string;
   description: string;
   canonicalUrl: string;
@@ -18,6 +20,8 @@ interface Props {
 }
 
 const {
+  lang = 'es',
+  ogType = 'website',
   title,
   description,
   canonicalUrl,
@@ -31,7 +35,7 @@ const resolvedOgImage = ogImage
   : new URL('/images/logo.png', Astro.site).toString();
 ---
 <!doctype html>
-<html lang="es">
+<html lang={lang}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -46,7 +50,7 @@ const resolvedOgImage = ogImage
       <link rel="alternate" hreflang={alt.lang} href={alt.href} />
     ))}
 
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={ogType} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalUrl} />
@@ -76,11 +80,11 @@ const resolvedOgImage = ogImage
     />
   </head>
   <body>
-    <Header />
+    <Header lang={lang} />
     <main>
       <slot />
     </main>
-    <Footer />
+    <Footer lang={lang} />
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Cloudflare Web Analytics: cookieless, no personal data collected, so
          no consent banner needed (unlike abitamo.com's GA4 setup). The

@@ -1,7 +1,9 @@
 ---
 import BaseLayout from './BaseLayout.astro';
 import { getCollection, type CollectionEntry } from 'astro:content';
-import { postUrl } from '../lib/urls';
+import { postUrl, appUrl, hreflangCode } from '../lib/urls';
+import { t, formatDate } from '../lib/i18n';
+import { AUTHOR, AUTHOR_URL, PUBLISHER } from '../lib/site';
 
 interface Props {
   entry: CollectionEntry<'blog'>;
@@ -15,6 +17,7 @@ const {
   lang,
   pillar,
   publishDate,
+  updatedDate,
   sources,
   heroImage,
   heroImageAlt,
@@ -41,24 +44,26 @@ const heroSectionBg =
 const heroTextClass = heroTheme === 'light' ? 'text-charcoal' : 'text-white';
 const heroSubTextClass = heroTheme === 'light' ? 'text-charcoal-75' : 'text-white-75';
 
-const dateLocale = { es: 'es-ES', pt: 'pt-PT', en: 'en-GB' }[lang] ?? 'es-ES';
-const formattedDate = publishDate.toLocaleDateString(dateLocale, {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-});
+const copy = t(lang);
+const formattedDate = formatDate(publishDate, lang);
+// Only surface "Actualizado" when the revision is a different day.
+const showUpdated = Boolean(updatedDate) && updatedDate!.valueOf() !== publishDate.valueOf();
+const formattedUpdated = showUpdated ? formatDate(updatedDate!, lang) : null;
+const modifiedDate = showUpdated ? updatedDate! : publishDate;
 // Posts with no dedicated OG raster (e.g. component-driven pages with no
 // single "hero photo") fall back to their on-page preview SVG rather than
 // the generic site logo.
 const ogImage = heroImage ?? previewImage;
 
-// Sibling translations of this same post share `slug` but differ in `lang`.
+// Sibling translations of this same post share `slug` but differ in `lang`
+// (and, now, in URL slug). Only translations that exist and aren't drafts
+// get an hreflang alternate.
 const allPosts = await getCollection('blog');
-const siblings = allPosts.filter((p) => p.data.slug === slug);
+const siblings = allPosts.filter((p) => p.data.slug === slug && !p.data.draft);
 
 const hreflangAlternates = siblings.map((p) => ({
-  lang: p.data.lang,
-  href: postUrl(Astro.site, p.data.lang, p.data.slug),
+  lang: hreflangCode(p.data.lang),
+  href: postUrl(Astro.site, p.data),
 }));
 
 const defaultSibling = ['es', 'pt', 'en']
@@ -67,26 +72,35 @@ const defaultSibling = ['es', 'pt', 'en']
 if (defaultSibling) {
   hreflangAlternates.push({
     lang: 'x-default',
-    href: postUrl(Astro.site, defaultSibling.data.lang, defaultSibling.data.slug),
+    href: postUrl(Astro.site, defaultSibling.data),
   });
 }
 
-const resolvedCanonical = canonicalUrl ?? postUrl(Astro.site, lang, slug);
+const resolvedCanonical = canonicalUrl ?? postUrl(Astro.site, entry.data);
 
 const articleSchema = {
   '@context': 'https://schema.org',
-  '@type': 'Article',
+  '@type': 'BlogPosting',
   headline: title,
   description,
   datePublished: publishDate.toISOString(),
+  dateModified: modifiedDate.toISOString(),
   inLanguage: lang,
   url: resolvedCanonical,
+  mainEntityOfPage: { '@type': 'WebPage', '@id': resolvedCanonical },
   ...(ogImage ? { image: new URL(ogImage, Astro.site).toString() } : {}),
-  publisher: {
-    '@type': 'Organization',
-    name: 'Abitamo',
-    url: 'https://abitamo.com',
-  },
+  author: AUTHOR,
+  publisher: PUBLISHER,
+};
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Abitamo', item: appUrl(lang) },
+    { '@type': 'ListItem', position: 2, name: copy.blog, item: new URL('/', Astro.site).toString() },
+    { '@type': 'ListItem', position: 3, name: title, item: resolvedCanonical },
+  ],
 };
 
 const faqSchema = faq?.length
@@ -104,9 +118,11 @@ const faqSchema = faq?.length
     }
   : null;
 
-const structuredData = faqSchema ? [articleSchema, faqSchema] : [articleSchema];
+const structuredData = [articleSchema, breadcrumbSchema, ...(faqSchema ? [faqSchema] : [])];
 ---
 <BaseLayout
+  lang={lang}
+  ogType="article"
   title={`${title} | Abitamo`}
   description={description}
   canonicalUrl={resolvedCanonical}
@@ -121,8 +137,16 @@ const structuredData = faqSchema ? [articleSchema, faqSchema] : [articleSchema];
           <div class={`col-lg-7 ${heroTextClass}`}>
             <span class="badge pillar-badge fw-semibold mb-3 d-inline-block">{pillar}</span>
             <h1 class="display-6 fw-bold mb-3">{title}</h1>
-            <p class={`${heroSubTextClass} mb-0`}>
-              <time datetime={publishDate.toISOString()}>{formattedDate}</time>
+            <p class={`${heroSubTextClass} mb-0 small`}>
+              {copy.by} <a href={AUTHOR_URL} rel="author noopener" target="_blank" class="text-reset fw-semibold">{AUTHOR.name}</a>
+              <span aria-hidden="true"> · </span>
+              {copy.published} <time datetime={publishDate.toISOString().slice(0, 10)}>{formattedDate}</time>
+              {formattedUpdated && (
+                <>
+                  <span aria-hidden="true"> · </span>
+                  {copy.updated} <time datetime={updatedDate!.toISOString().slice(0, 10)}>{formattedUpdated}</time>
+                </>
+              )}
             </p>
           </div>
           {previewImage && (
@@ -148,12 +172,29 @@ const structuredData = faqSchema ? [articleSchema, faqSchema] : [articleSchema];
       </div>
     </div>
   </article>
+  {hasCustomHero && (
+    <section class="py-3 bg-white border-top" aria-label="Byline">
+      <div class="container">
+        <p class="small text-muted mb-0">
+          {copy.by} <a href={AUTHOR_URL} rel="author noopener" target="_blank" class="fw-semibold">{AUTHOR.name}</a>
+          <span aria-hidden="true"> · </span>
+          {copy.published} <time datetime={publishDate.toISOString().slice(0, 10)}>{formattedDate}</time>
+          {formattedUpdated && (
+            <>
+              <span aria-hidden="true"> · </span>
+              {copy.updated} <time datetime={updatedDate!.toISOString().slice(0, 10)}>{formattedUpdated}</time>
+            </>
+          )}
+        </p>
+      </div>
+    </section>
+  )}
   {!hasCustomHero && faq?.length > 0 && (
-    <section class="py-4 bg-white border-top" aria-label="Preguntas frecuentes">
+    <section class="py-4 bg-white border-top" aria-label={copy.faq}>
       <div class="container">
         <div class="row justify-content-center">
           <div class="col-lg-8">
-            <h2 class="h5 fw-bold mb-3">Preguntas frecuentes</h2>
+            <h2 class="h5 fw-bold mb-3">{copy.faq}</h2>
             {faq.map((item) => (
               <details class="mercado-faq-item">
                 <summary>{item.question}</summary>
@@ -166,9 +207,9 @@ const structuredData = faqSchema ? [articleSchema, faqSchema] : [articleSchema];
     </section>
   )}
   {sources?.length > 0 && (
-    <section class="py-4 bg-white border-top" aria-label="Fuentes">
+    <section class="py-4 bg-white border-top" aria-label={copy.sources}>
       <div class="container">
-        <h2 class="h6 text-muted text-uppercase mb-3">Fuentes</h2>
+        <h2 class="h6 text-muted text-uppercase mb-3">{copy.sources}</h2>
         <ul class="small text-muted">
           {sources.map((source) => (
             <li>
