@@ -1,0 +1,163 @@
+diff -ruN a/app/helpers/application_helper.rb b/app/helpers/application_helper.rb
+--- a/app/helpers/application_helper.rb	2026-10-28 14:20:22
++++ b/app/helpers/application_helper.rb	2026-10-28 14:20:22
+@@ -99,14 +99,13 @@
+                data: { cf_beacon: { token: CLOUDFLARE_BEACON_TOKEN }.to_json })
+   end
+ 
+-  # Blog is hosted on a separate subdomain; es has no locale prefix, matching config/routes.rb.
++  # The blog is served from this same host under the locale prefix (/es/blog, /pt/blog, /en/blog).
+   def blog_url
+-    prefix = I18n.locale == :es ? '' : "/#{I18n.locale}"
+-    "https://blog.abitamo.com#{prefix}"
++    BlogLinks.index_path(I18n.locale)
+   end
+ 
+   # Blog article on the Spanish housing decrees of October 2026, in the current locale.
+   def spain_housing_decrees_article_url
+-    "#{blog_url}/#{ContractFlow::SpainRentalRegime.blog_article_slug}"
++    BlogLinks.article_path(ContractFlow::SpainRentalRegime.blog_article_slug, I18n.locale)
+   end
+ end
+diff -ruN a/app/services/blog_links.rb b/app/services/blog_links.rb
+--- a/app/services/blog_links.rb	1970-01-01 01:00:00
++++ b/app/services/blog_links.rb	2026-10-28 14:20:22
+@@ -0,0 +1,23 @@
++# The blog is served by a Cloudflare Worker from abitamo.com/{locale}/blog
++# (blog repo: wrangler.toml). Article slugs are translated per locale; the
++# keys here are the Spanish slugs, which the blog also uses as the shared
++# translation key (`slug` in its frontmatter).
++module BlogLinks
++  ARTICLE_SLUGS = {
++    'certificado-inquilino' => { es: 'certificado-inquilino', pt: 'certificado-de-inquilino', en: 'tenant-certificate' },
++    'mercado' => { es: 'mercado', pt: 'mercado-arrendamento-2026', en: 'rental-market-2026' },
++    'decretos-vivienda-octubre-2026' => {
++      es: 'decretos-vivienda-octubre-2026',
++      pt: 'decretos-habitacao-outubro-2026',
++      en: 'spain-housing-decrees-october-2026'
++    }
++  }.freeze
++
++  def self.index_path(locale)
++    "/#{locale}/blog"
++  end
++
++  def self.article_path(key, locale)
++    "#{index_path(locale)}/#{ARTICLE_SLUGS.fetch(key).fetch(locale.to_sym)}"
++  end
++end
+diff -ruN a/config/routes.rb b/config/routes.rb
+--- a/config/routes.rb	2026-10-28 14:20:22
++++ b/config/routes.rb	2026-10-28 14:20:22
+@@ -68,15 +68,11 @@
+     get 'smart-payments', to: 'pages#smart_payments', as: :smart_payments
+     get 'contratos', to: 'pages#rental_contracts', as: :rental_contracts
+     get 'recursos/certificado-inquilino', to: redirect { |params, _req|
+-      locale = params[:locale] || 'en'
+-      prefix = locale == 'es' ? '' : "/#{locale}"
+-      "https://blog.abitamo.com#{prefix}/certificado-inquilino"
++      BlogLinks.article_path('certificado-inquilino', params[:locale] || 'en')
+     }
+     get 'gdpr', to: redirect { |params, _req| "/#{params[:locale] || 'en'}/privacy" }
+     get 'mercado', to: redirect { |params, _req|
+-      locale = params[:locale] || 'en'
+-      prefix = locale == 'es' ? '' : "/#{locale}"
+-      "https://blog.abitamo.com#{prefix}/mercado"
++      BlogLinks.article_path('mercado', params[:locale] || 'en')
+     }
+     get 'how-to-read-a-certificate', to: 'pages#certificate_guide', as: :certificate_guide
+     resources :waitlist_entries, only: [:create]
+diff -ruN a/public/robots.txt b/public/robots.txt
+--- a/public/robots.txt	2026-10-28 14:20:22
++++ b/public/robots.txt	2026-10-28 14:20:22
+@@ -15,3 +15,4 @@
+ Disallow: /letter_opener
+ 
+ Sitemap: https://abitamo.com/sitemap.xml
++Sitemap: https://abitamo.com/blog-sitemap-index.xml
+diff -ruN a/test/controllers/pages_controller_test.rb b/test/controllers/pages_controller_test.rb
+--- a/test/controllers/pages_controller_test.rb	2026-10-28 14:20:22
++++ b/test/controllers/pages_controller_test.rb	2026-10-28 14:20:22
+@@ -80,17 +80,19 @@
+   end
+ 
+   test "certificado-inquilino redirects to the blog for every locale" do
+-    { nil => '/en', 'en' => '/en', 'pt' => '/pt', 'es' => '' }.each do |locale, blog_prefix|
++    { nil => '/en/blog/tenant-certificate', 'en' => '/en/blog/tenant-certificate',
++      'pt' => '/pt/blog/certificado-de-inquilino', 'es' => '/es/blog/certificado-inquilino' }.each do |locale, target|
+       get [locale, 'recursos/certificado-inquilino'].compact.join('/').prepend('/')
+-      assert_redirected_to "https://blog.abitamo.com#{blog_prefix}/certificado-inquilino"
++      assert_redirected_to target
+       assert_response :moved_permanently
+     end
+   end
+ 
+   test "mercado redirects to the blog for every locale" do
+-    { nil => '/en', 'en' => '/en', 'pt' => '/pt', 'es' => '' }.each do |locale, blog_prefix|
++    { nil => '/en/blog/rental-market-2026', 'en' => '/en/blog/rental-market-2026',
++      'pt' => '/pt/blog/mercado-arrendamento-2026', 'es' => '/es/blog/mercado' }.each do |locale, target|
+       get [locale, 'mercado'].compact.join('/').prepend('/')
+-      assert_redirected_to "https://blog.abitamo.com#{blog_prefix}/mercado"
++      assert_redirected_to target
+       assert_response :moved_permanently
+     end
+   end
+diff -ruN a/test/controllers/rental_contracts_page_test.rb b/test/controllers/rental_contracts_page_test.rb
+--- a/test/controllers/rental_contracts_page_test.rb	2026-10-28 14:20:22
++++ b/test/controllers/rental_contracts_page_test.rb	2026-10-28 14:20:22
+@@ -17,7 +17,7 @@
+ 
+   test 'the decree block links to the blog article in the visitor language' do
+     get rental_contracts_path(locale: :en)
+-    assert_select 'a[href="https://blog.abitamo.com/en/decretos-vivienda-octubre-2026"]'
++    assert_select 'a[href="/en/blog/spain-housing-decrees-october-2026"]'
+   end
+ 
+   test 'the FAQ structured data includes the decree question' do
+diff -ruN a/test/helpers/application_helper_test.rb b/test/helpers/application_helper_test.rb
+--- a/test/helpers/application_helper_test.rb	2026-10-28 14:20:22
++++ b/test/helpers/application_helper_test.rb	2026-10-28 14:20:22
+@@ -43,31 +43,34 @@
+     assert_equal 'bi bi-file-earmark-arrow-up', stepper_icon_for(flow: :certification_renter_flow, step: :document_upload,     status: 'current')
+   end
+ 
+-  # blog_url — locale prefix matches config/routes.rb redirect behavior
+-  test "blog_url has no locale prefix for es" do
++  # blog_url — same host, locale-prefixed
++  test "blog_url is /es/blog for es" do
+     I18n.with_locale(:es) do
+-      assert_equal 'https://blog.abitamo.com', blog_url
++      assert_equal '/es/blog', blog_url
+     end
+   end
+ 
+-  test "blog_url has a locale prefix for en" do
++  test "blog_url is /en/blog for en" do
+     I18n.with_locale(:en) do
+-      assert_equal 'https://blog.abitamo.com/en', blog_url
++      assert_equal '/en/blog', blog_url
+     end
+   end
+ 
+-  test "blog_url has a locale prefix for pt" do
++  test "blog_url is /pt/blog for pt" do
+     I18n.with_locale(:pt) do
+-      assert_equal 'https://blog.abitamo.com/pt', blog_url
++      assert_equal '/pt/blog', blog_url
+     end
+   end
+ 
+   test "spain_housing_decrees_article_url points to the article in the current locale" do
+     I18n.with_locale(:es) do
+-      assert_equal 'https://blog.abitamo.com/decretos-vivienda-octubre-2026', spain_housing_decrees_article_url
++      assert_equal '/es/blog/decretos-vivienda-octubre-2026', spain_housing_decrees_article_url
+     end
++    I18n.with_locale(:pt) do
++      assert_equal '/pt/blog/decretos-habitacao-outubro-2026', spain_housing_decrees_article_url
++    end
+     I18n.with_locale(:en) do
+-      assert_equal 'https://blog.abitamo.com/en/decretos-vivienda-octubre-2026', spain_housing_decrees_article_url
++      assert_equal '/en/blog/spain-housing-decrees-october-2026', spain_housing_decrees_article_url
+     end
+   end
+ 

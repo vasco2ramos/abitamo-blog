@@ -1,0 +1,83 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { LANGS, blogIndexPath, postPath, postUrl, hreflangCode } from '../../../lib/urls';
+import { t, formatDate } from '../../../lib/i18n';
+
+export function getStaticPaths() {
+  return LANGS.map((lang) => ({ params: { lang } }));
+}
+
+const lang = Astro.params.lang as string;
+const copy = t(lang);
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft && data.lang === lang)).sort(
+  (a, b) => b.data.publishDate.valueOf() - a.data.publishDate.valueOf()
+);
+
+// One listing per language; alternates point at the other languages' listings.
+const hreflangAlternates = [
+  ...LANGS.map((l) => ({
+    lang: hreflangCode(l),
+    href: new URL(blogIndexPath(l), Astro.site).toString(),
+  })),
+  { lang: 'x-default', href: new URL(blogIndexPath('es'), Astro.site).toString() },
+];
+---
+<BaseLayout
+  lang={lang}
+  title={`${copy.blogTitle} | Abitamo`}
+  description={copy.blogDescription}
+  canonicalUrl={new URL(blogIndexPath(lang), Astro.site).toString()}
+  hreflangAlternates={hreflangAlternates}
+>
+  <section
+    class="hero-landlords-bg py-5"
+    aria-label={copy.blogTitle}
+    style="background-image: linear-gradient(135deg, var(--brand-hero-overlay-from) 0%, var(--brand-hero-overlay-to) 100%), url(/blog-assets/images/blog-hero.svg);"
+  >
+    <div class="container py-5 text-white text-center">
+      <h1 class="display-5 fw-bold mb-2">{copy.blogTitle}</h1>
+      <p class="fs-5 mb-0">{copy.blogTagline}</p>
+    </div>
+  </section>
+
+  <section class="py-5 bg-white">
+    <div class="container">
+      {posts.length === 0 ? (
+        <p class="text-muted text-center">{copy.noPosts}</p>
+      ) : (
+        <div class="row g-4">
+          {posts.map((post) => (
+            <div class="col-12 col-md-6 col-lg-4">
+              <div class="card blog-card h-100 border-0 shadow-sm overflow-hidden">
+                {post.data.previewImage && (
+                  <div
+                    class="blog-card-thumb"
+                    style={`background-image: linear-gradient(135deg, var(--brand-hero-overlay-from) 0%, var(--brand-hero-overlay-to) 100%), url(${post.data.previewImage});`}
+                    role="img"
+                    aria-label={post.data.previewImageAlt ?? ''}
+                  />
+                )}
+                <div class="p-4">
+                  <div class="mb-2">
+                    <span class="badge pillar-badge fw-semibold">{post.data.pillar}</span>
+                  </div>
+                  <a href={postPath(post.data)} class="text-decoration-none text-reset stretched-link">
+                    <h2 class="h5 fw-bold">{post.data.title}</h2>
+                  </a>
+                  <p class="small text-muted mb-2">
+                    <time datetime={post.data.publishDate.toISOString().slice(0, 10)}>
+                      {formatDate(post.data.publishDate, lang)}
+                    </time>
+                  </p>
+                  <p class="small text-muted mb-0">{post.data.description}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </section>
+</BaseLayout>
